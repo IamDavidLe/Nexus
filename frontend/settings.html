@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07070a" />
+  <meta name="description" content="Manage your Nexus preferences." />
+  <title>Nexus — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./dashboard.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to settings</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <aside class="sidebar">
+    <a class="brand" href="./" aria-label="Nexus home">Nexus<sup>®</sup></a>
+    <nav aria-label="Dashboard navigation">
+      <a class="nav-item" href="./dashboard.html"><span aria-hidden="true">⌂</span> Overview</a>
+      <a class="nav-item" href="./dashboard.html#activity"><span aria-hidden="true">↗</span> Activity</a>
+      <a class="nav-item" href="./dashboard.html#spending"><span aria-hidden="true">⌁</span> Insights</a>
+      <a class="nav-item" href="./dashboard.html#cards"><span aria-hidden="true">▣</span> Cards</a>
+    </nav>
+    <div class="sidebar__bottom">
+      <a class="nav-item is-active" href="./settings.html" aria-current="page"><span aria-hidden="true">⚙</span> Settings</a>
+      <a class="profile" href="#profile"><span class="avatar avatar--me">A</span><span>Alex Morgan<small>@alex</small></span><span aria-hidden="true">⌄</span></a>
+    </div>
+  </aside>
+
+  <main id="main" class="dashboard settings-page">
+    <header class="topbar">
+      <div><p class="eyebrow">Account preferences</p><h1>Settings, <em>your way.</em></h1></div>
+      <a class="back-link" href="./dashboard.html"><span aria-hidden="true">←</span> Back to overview</a>
+    </header>
+
+    <form class="settings-form" data-settings-form>
+      <section class="settings-section" id="profile" aria-labelledby="profile-title">
+        <div class="settings-section__heading"><div><p class="eyebrow">Profile</p><h2 id="profile-title">Your account</h2></div><span class="avatar avatar--me avatar--large">A</span></div>
+        <div class="settings-fields">
+          <label>Display name<input name="displayName" value="Alex Morgan" autocomplete="name" /></label>
+          <label>Username<input name="username" value="@alex" autocomplete="username" /></label>
+          <label>Email address<input name="email" type="email" value="alex@example.com" autocomplete="email" /></label>
+          <label>Default currency<select name="currency"><option value="USD">USD — US dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British pound</option></select></label>
+        </div>
+      </section>
+
+      <section class="settings-section" aria-labelledby="notifications-title">
+        <div class="settings-section__heading"><div><p class="eyebrow">Notifications</p><h2 id="notifications-title">Stay in the loop.</h2></div></div>
+        <div class="settings-rows">
+          <div class="setting-row"><div><b>Payment activity</b><span>Know when money is sent, received, or requested.</span></div><button class="toggle" type="button" data-setting="paymentActivity" aria-pressed="true"><span></span></button></div>
+          <div class="setting-row"><div><b>Split reminders</b><span>Get a nudge when a shared bill is waiting.</span></div><button class="toggle" type="button" data-setting="splitReminders" aria-pressed="true"><span></span></button></div>
+          <div class="setting-row"><div><b>Weekly summary</b><span>A private recap of your activity each Sunday.</span></div><button class="toggle" type="button" data-setting="weeklySummary" aria-pressed="false"><span></span></button></div>
+        </div>
+      </section>
+
+      <section class="settings-section" aria-labelledby="privacy-title">
+        <div class="settings-section__heading"><div><p class="eyebrow">Privacy and security</p><h2 id="privacy-title">Keep it close.</h2></div></div>
+        <div class="settings-rows">
+          <div class="setting-row"><div><b>Private activity</b><span>Hide your payment activity from other Nexus members.</span></div><button class="toggle" type="button" data-setting="privateActivity" aria-pressed="true"><span></span></button></div>
+          <a class="setting-row setting-row--link" href="#security"><div><b>Security</b><span>Passkey, trusted devices, and recovery options.</span></div><span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <div class="settings-form__footer"><p class="save-status" role="status" aria-live="polite" data-save-status></p><button class="save-button" type="submit">Save changes</button></div>
+    </form>
+  </main>
+  <script type="module" src="./settings.js"></script>
+</body>
+</html>
