@@ -24,7 +24,7 @@
       <a href="#feed">Community</a>
       <a href="#everywhere">Web &amp; App</a>
     </nav>
-    <a href="#cta" class="glass-btn glass-btn--sm nav__cta">Get Nexus</a>
+    <a href="#cta" class="glass-btn glass-btn--sm nav__cta">Get started</a>
     <button class="nav__burger" aria-label="Menu" aria-expanded="false" data-burger><span></span><span></span></button>
   </header>
   <div class="menu" data-menu aria-hidden="true">
@@ -35,68 +35,64 @@
   <main id="main">
 
     <!-- ================= HERO ================= -->
-    <section class="hero" id="top">
-      <div class="sky" aria-hidden="true">
-        <div class="sky__sun"></div>
-        <canvas class="sky__back" data-sky-back></canvas>
-      </div>
+    <section class="hero" id="top" data-hero>
+      <div class="world" aria-hidden="true">
+        <div class="sky"><div class="sky__sun"></div><div class="sky__haze"></div></div>
+        <canvas class="layer" data-layer="back" data-depth="0.012"></canvas>
+        <canvas class="layer" data-layer="fx" data-depth="0.02"></canvas>
+        <canvas class="layer" data-layer="meadow" data-depth="0.035"></canvas>
 
-      <div class="hero__copy">
-        <h1 class="hero__title" data-hero-title>
-          <span class="w">Money</span> <span class="w">that</span> <span class="w">moves</span>
-          <em class="w">like</em> <em class="w">a</em> <em class="w">message.</em>
-        </h1>
-        <p class="hero__sub fade-in" style="--d:.9s">
-          Send, split and request money in seconds, from your phone or any browser.
-          There are no fees between friends, and no more IOUs.
-        </p>
-        <div class="hero__ctas fade-in" style="--d:1.1s">
-          <a href="#cta" class="glass-btn glass-btn--lg">Get Nexus</a>
-          <a href="#features" class="text-link">See how it works <span aria-hidden="true">→</span></a>
-        </div>
-      </div>
-
-      <!-- Phone rising through the clouds -->
-      <div class="hero__stage" data-hero-stage>
-        <div class="toast toast--l" data-toast="0" aria-hidden="true">
-          <span class="av" style="--c:#f59e8b">M</span>
-          <div><b>Maya paid you</b><small>🍣 Sushi Friday</small></div>
-          <em>+$18.40</em>
-        </div>
-        <div class="toast toast--r" data-toast="1" aria-hidden="true">
-          <span class="av" style="--c:#8fb3ff">4</span>
-          <div><b>Bill split 4 ways</b><small>🏠 Utilities · Oct</small></div>
-          <em>$31.25 ea</em>
-        </div>
-        <div class="toast toast--l2" data-toast="2" aria-hidden="true">
-          <span class="av" style="--c:#c9a7ff">J</span>
-          <div><b>Jordan requested</b><small>🎬 Movie tickets</small></div>
-          <em>$15.00</em>
+        <!-- The sender: sitting on the hill, phone glowing -->
+        <div class="layer sender-wrap" data-depth="0.045">
+          <svg class="sender" viewBox="0 0 300 360" data-sender>
+            <defs>
+              <linearGradient id="robe" x1="0" y1="0" x2=".35" y2="1">
+                <stop offset="0" stop-color="#3d4595" /><stop offset=".5" stop-color="#272c6c" /><stop offset="1" stop-color="#121433" />
+              </linearGradient>
+              <linearGradient id="rim" x1="0" y1="0" x2="1" y2=".4">
+                <stop offset="0" stop-color="#ffd8de" stop-opacity=".95" /><stop offset=".45" stop-color="#ffc6d2" stop-opacity=".2" /><stop offset="1" stop-color="#bfd6ff" stop-opacity=".8" />
+              </linearGradient>
+              <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2a2d63" /><stop offset="1" stop-color="#0e1030" />
+              </linearGradient>
+              <radialGradient id="face" cx=".78" cy=".62" r=".9">
+                <stop offset="0" stop-color="#8fa6e6" /><stop offset=".45" stop-color="#3d4180" /><stop offset="1" stop-color="#23264f" />
+              </radialGradient>
+              <radialGradient id="screenGlow">
+                <stop offset="0" stop-color="#f2faff" stop-opacity="1" /><stop offset=".25" stop-color="#a9d6ff" stop-opacity=".55" /><stop offset="1" stop-color="#6aa8ff" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <circle class="sender__glow" cx="228" cy="196" r="96" fill="url(#screenGlow)" />
+            <path d="M136 118 C118 124 104 146 98 178 C90 220 86 262 70 300 C60 322 44 340 26 356 L286 356 C282 340 276 326 266 316 C262 292 262 262 254 244 C248 232 236 228 222 232 C206 236 196 232 188 220 C180 200 176 168 166 142 C160 128 150 120 136 118Z" fill="url(#robe)" stroke="url(#rim)" stroke-width="1.6" />
+            <path d="M142 108 L152 108 L154 126 L140 126Z" fill="#23264f" />
+            <circle class="sender__face" cx="152" cy="92" r="23" fill="url(#face)" />
+            <path d="M126 98 C121 66 143 55 161 61 C178 67 182 86 176 99 C170 94 162 88 151 90 C144 103 140 116 133 121 C127 117 125 108 126 98Z" fill="url(#hair)" stroke="url(#rim)" stroke-width="1.2" />
+            <path d="M158 140 C170 170 180 202 196 214 C206 222 218 220 230 208 L226 198 C216 206 206 208 198 200 C186 182 178 160 170 138Z" fill="#323880" stroke="rgba(190,214,255,.35)" stroke-width="1" />
+            <rect class="sender__phone" x="221" y="185" width="13" height="22" rx="3" transform="rotate(-32 228 196)" />
+          </svg>
         </div>
 
-        <div class="phone" aria-label="Nexus app preview" role="img">
-          <div class="phone__notch"></div>
-          <div class="phone__screen">
-            <div class="app__status"><span>9:41</span><span class="app__icons">▮▮▮ ◔</span></div>
-            <div class="app__head">
-              <div class="app__hello"><span class="av av--me">A</span><div><small>Good evening</small><b>Alex</b></div></div>
-              <span class="app__bell">●</span>
-            </div>
-            <div class="app__card">
-              <small>Nexus balance</small>
-              <b data-balance>$2,480.16</b>
-              <div class="app__actions">
-                <span>↑ Send</span><span>↓ Request</span><span>⌗ Scan</span>
-              </div>
-            </div>
-            <div class="app__list-head"><b>Activity</b><small>See all</small></div>
-            <ul class="app__list" data-activity></ul>
-          </div>
+        <canvas class="layer" data-layer="front" data-depth="0.07"></canvas>
+
+        <!-- arrival notifications (positioned by JS) -->
+        <div class="ping" data-ping>
+          <span class="ping__av" data-ping-av>M</span>
+          <div><b data-ping-title>Maya received $40.00</b><small data-ping-note>🌸 For the flowers</small></div>
         </div>
       </div>
 
-      <canvas class="sky__front" data-sky-front aria-hidden="true"></canvas>
       <div class="hero__fade" aria-hidden="true"></div>
+
+      <div class="hero__content" data-hero-content>
+        <h1 class="hero__title rise">
+          <span class="hw">Where</span> <span class="hw">every</span> <span class="hw">dollar</span> <span class="hw">finds</span> <span class="hw">its</span> <span class="hw">way</span> <span class="hw">home.</span>
+        </h1>
+        <p class="hero__lead rise rise--d1">
+          Nexus is how friends, families and roommates send, split and request money in seconds, on the web or in the app.
+          It's simple, secure and feels a little like magic.
+        </p>
+        <a href="#cta" class="glass-btn hero__btn fade-rise">Send money</a>
+      </div>
     </section>
 
     <!-- ================= STATEMENT ================= -->

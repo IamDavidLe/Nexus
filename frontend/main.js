@@ -1,6 +1,6 @@
 /* =========================================================
    Nexus — landing page motion
-   Canvas sky + clouds, live phone feed, feature scenes,
+   Cinematic hero world, feature scenes,
    scroll-scrubbed statement. No dependencies.
    ========================================================= */
 
@@ -10,14 +10,9 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const rand = (a, b) => a + Math.random() * (b - a);
 const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5; // ~[-1,1]
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const fmtMoney = (cents) => {
-  const sign = cents < 0 ? "−" : "";
-  const c = Math.abs(cents);
-  return `${sign}$${Math.floor(c / 100).toLocaleString("en-US")}.${String(c % 100).padStart(2, "0")}`;
-};
 
 /* ---------- Word splitting ---------- */
-$$("[data-hero-title] .w").forEach((w, i) => w.style.setProperty("--i", i));
+$$(".hero__title .hw").forEach((w, i) => w.style.setProperty("--i", i));
 
 function splitWords(el, cls) {
   const walk = (node, italic) => {
@@ -79,19 +74,36 @@ $$(".glass-btn").forEach((b) => b.addEventListener("pointermove", (e) => {
 }));
 
 /* =========================================================
-   SKY: stars + three parallax cloud banks on two canvases
+   HERO WORLD
+   A dusk sky over a sea of clouds. Someone sits on a flower
+   hill with a glowing phone; payments arc through the sky
+   as comets to friends standing on distant cloud-islands.
    ========================================================= */
-const sky = (() => {
-  const back = $("[data-sky-back]");
-  const front = $("[data-sky-front]");
-  const hero = $(".hero");
-  if (!back || !front) return null;
-  const bctx = back.getContext("2d");
-  const fctx = front.getContext("2d");
-  let W, H, dpr, stars = [], layers = [];
+const hero = $("[data-hero]");
+const heroContent = $("[data-hero-content]");
+const PAD = 40; // canvases overhang the hero so parallax never shows an edge
 
-  // Paint one wrap-around cloud bank on an offscreen canvas.
-  function makeBank(w, h, { clusters, heightMax, shade, alpha = 1, tower = false }) {
+const world = (() => {
+  const cv = {}, ctx = {};
+  $$("canvas[data-layer]", hero).forEach((c) => { cv[c.dataset.layer] = c; ctx[c.dataset.layer] = c.getContext("2d"); });
+  const layers = $$(".layer", hero);
+  const senderSvg = $("[data-sender]");
+  const ping = $("[data-ping]");
+  const pingAv = $("[data-ping-av]");
+  const pingTitle = $("[data-ping-title]");
+  const pingNote = $("[data-ping-note]");
+
+  let W, H, dpr, narrow;
+  let stars = [], banks = [], tower = null, flowers = [], fgFlowers = [], motes = [], hillPts = [];
+  let sparks = [], rings = [], comets = [];
+  const friends = {
+    left: { nx: 0.15, ny: 0.585, glow: 0 },
+    right: { nx: 0.86, ny: 0.565, glow: 0 },
+  };
+  let senderBase = { x: 0, y: 0 };
+
+  /* ---- cloud bank painter (wraps horizontally) ---- */
+  function makeBank(w, h, { clusters, heightMax, shade, alpha = 1, flat = 0.75, towerAt = -1 }) {
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
     const x = c.getContext("2d");
@@ -102,130 +114,421 @@ const sky = (() => {
         const g = x.createRadialGradient(cx, py - r * 0.15, 0, cx, py, r);
         g.addColorStop(0, `rgba(255,255,255,${a})`);
         g.addColorStop(0.62, `rgba(255,255,255,${a * 0.85})`);
-        g.addColorStop(0.85, `rgba(255,255,255,${a * 0.3})`);
+        g.addColorStop(0.86, `rgba(255,255,255,${a * 0.28})`);
         g.addColorStop(1, "rgba(255,255,255,0)");
         x.fillStyle = g;
         x.beginPath(); x.arc(cx, py, r, 0, Math.PI * 2); x.fill();
       }
     };
-    const base = h * 0.74;
+    const base = h * flat;
     for (let k = 0; k < clusters; k++) {
       const cx = (k + Math.random() * 0.8) * (w / clusters);
-      const cw = rand(0.35, 0.8) * (w / clusters);
+      const cw = rand(0.4, 0.85) * (w / clusters);
       const ch = rand(0.45, 1) * heightMax;
       const n = Math.round(rand(26, 44));
       for (let i = 0; i < n; i++) {
         const dx = gauss() * cw * 0.6;
         const fall = 1 - Math.min(1, Math.abs(dx) / cw);
         const r = rand(0.18, 0.36) * ch * (0.45 + fall);
-        const py = base - Math.abs(gauss()) * ch * fall * 0.75 - r * 0.2;
-        puff(cx + dx, py, r, rand(0.35, 0.7));
+        puff(cx + dx, base - Math.abs(gauss()) * ch * fall * 0.7 - r * 0.2, r, rand(0.35, 0.7));
       }
     }
-    if (tower) {
-      // one tall billowing cumulus
-      const tx = w * 0.14, n = 60;
-      for (let i = 0; i < n; i++) {
-        const t = i / n;
-        const r = rand(0.1, 0.18) * h * (1.1 - t * 0.55);
-        const py = Math.max(r * 1.05, base - t * h * 0.55 + gauss() * 10); // keep puffs inside the bank
-        puff(tx + gauss() * w * 0.05 * (1.2 - t), py, r, rand(0.4, 0.75));
+    if (towerAt >= 0) {
+      // a broad billowing cumulus: wide shoulders, rounded crown
+      for (let i = 0; i < 150; i++) {
+        const t = Math.pow(Math.random(), 0.8);
+        const spread = w * 0.26 * (1.1 - t * 0.55);
+        const r = rand(0.09, 0.16) * h * (1.2 - t * 0.5);
+        const py = Math.max(r * 1.02, base - t * h * 0.6 + gauss() * 8);
+        puff(towerAt * w + gauss() * spread, py, r, rand(0.45, 0.85));
       }
     }
-    // colour the puffs: lit tops, shaded bellies
     x.globalCompositeOperation = "source-atop";
     const grd = x.createLinearGradient(0, 0, 0, h);
-    shade.forEach(([stop, col]) => grd.addColorStop(stop, col));
-    x.fillStyle = grd;
-    x.fillRect(0, 0, w, h);
-    // melt the bank's lower edge so no hard line shows
+    shade.forEach(([s, col]) => grd.addColorStop(s, col));
+    x.fillStyle = grd; x.fillRect(0, 0, w, h);
     x.globalCompositeOperation = "destination-in";
     const fade = x.createLinearGradient(0, 0, 0, h);
-    fade.addColorStop(0, "#000"); fade.addColorStop(0.72, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = fade;
-    x.fillRect(0, 0, w, h);
+    fade.addColorStop(0, "#000"); fade.addColorStop(0.7, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = fade; x.fillRect(0, 0, w, h);
     return { canvas: c, w, h, alpha };
   }
+
+  /* ---- the hill the sender sits on (Catmull-Rom through hillPts) ---- */
+  function hillY(x) {
+    const p = hillPts;
+    let i = 0;
+    while (i < p.length - 2 && x > p[i + 1][0]) i++;
+    const p0 = p[Math.max(0, i - 1)], p1 = p[i], p2 = p[i + 1], p3 = p[Math.min(p.length - 1, i + 2)];
+    const t = clamp((x - p1[0]) / (p2[0] - p1[0] || 1), 0, 1);
+    const t2 = t * t, t3 = t2 * t;
+    return 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+  }
+
+  // colour of the hill gradient (#3b3776 → #221f4c → #07060f over .68H..H) at height y
+  function hillColorAt(y) {
+    const stops = [[0, [59, 55, 118]], [0.35, [34, 31, 76]], [1, [7, 6, 15]]];
+    const t = clamp((y - H * 0.68) / (H * 0.32), 0, 1);
+    let i = 0;
+    while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
+    const [t0, c0] = stops[i], [t1, c1] = stops[i + 1];
+    const k = (t - t0) / (t1 - t0);
+    return c0.map((v, j) => Math.round(v + (c1[j] - v) * k));
+  }
+
+  const PETALS = ["245,163,199", "255,143,177", "185,164,255", "143,176,255", "255,236,244", "250,196,170"];
 
   function build() {
     dpr = Math.min(devicePixelRatio || 1, 1.5);
     const r = hero.getBoundingClientRect();
     W = Math.round(r.width); H = Math.round(r.height);
-    for (const cv of [back, front]) { cv.width = W * dpr; cv.height = H * dpr; }
-    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const narrow = W < 700;
+    narrow = W < 700;
+    for (const k in cv) {
+      cv[k].width = (W + PAD * 2) * dpr; cv[k].height = (H + PAD * 2) * dpr;
+      ctx[k].setTransform(dpr, 0, 0, dpr, PAD * dpr, PAD * dpr); // draw in hero coordinates
+    }
+    friends.left.nx = narrow ? 0.12 : 0.15;
+    friends.right.nx = narrow ? 0.88 : 0.86;
 
-    stars = Array.from({ length: narrow ? 60 : 130 }, () => ({
-      x: Math.random() * W, y: Math.pow(Math.random(), 1.6) * H * 0.42,
-      r: rand(0.3, 1.2), p: Math.random() * Math.PI * 2, s: rand(0.6, 2),
+    // where the sender's robe meets the ground (hero coords, parallax at rest)
+    const wrap = senderSvg.parentElement;
+    const tf = wrap.style.transform;
+    wrap.style.transform = "none";
+    const sr = senderSvg.getBoundingClientRect();
+    wrap.style.transform = tf;
+    senderBase = { x: sr.left - r.left + sr.width * 0.52, y: sr.top - r.top + sr.height * (352 / 360) };
+
+    const by = senderBase.y + 3, bx = senderBase.x;
+    hillPts = [
+      [-PAD - 10, H * 0.70], [W * 0.14, H * 0.735], [bx - W * 0.2, by - H * 0.005],
+      [bx - W * 0.06, by - 2], [bx + W * 0.08, by + 2], [bx + W * 0.26, by + H * 0.04], [W + PAD + 10, by + H * 0.085],
+    ];
+
+    stars = Array.from({ length: narrow ? 70 : 150 }, () => ({
+      x: Math.random() * W, y: Math.pow(Math.random(), 1.7) * H * 0.45,
+      r: rand(0.3, 1.25), p: Math.random() * 6.28, s: rand(0.5, 2.1),
     }));
 
-    layers = [
-      { ctx: bctx, y: 0.40, speed: 3, par: 0.34,
-        bank: makeBank(Math.round(W * 1.5), Math.round(H * 0.26), { clusters: narrow ? 4 : 7, heightMax: H * 0.18, alpha: 0.7,
-          shade: [[0, "rgba(255,244,246,.95)"], [0.6, "rgba(246,206,214,.9)"], [1, "rgba(206,178,220,.85)"]] }) },
-      { ctx: bctx, y: 0.46, speed: 7, par: 0.2,
-        bank: makeBank(Math.round(W * 1.7), Math.round(H * 0.42), { clusters: narrow ? 3 : 5, heightMax: H * 0.26, tower: !narrow,
-          shade: [[0, "rgba(255,238,242,.98)"], [0.45, "rgba(236,190,212,.95)"], [1, "rgba(150,140,205,.95)"]] }) },
-      { ctx: fctx, y: 0.86, speed: 13, par: 0.06,
-        bank: makeBank(Math.round(W * 2), Math.round(H * 0.34), { clusters: narrow ? 4 : 8, heightMax: H * 0.2,
-          shade: [[0, "rgba(232,206,232,1)"], [0.35, "rgba(170,156,214,1)"], [1, "rgba(52,48,110,1)"]] }) },
+    tower = makeBank(Math.round(W * (narrow ? 0.9 : 0.62)), Math.round(H * 0.6), {
+      clusters: 3, heightMax: H * 0.16, towerAt: 0.42, flat: 0.8,
+      shade: [[0, "rgba(255,247,250,.98)"], [0.35, "rgba(250,214,226,.97)"], [0.7, "rgba(206,178,222,.95)"], [1, "rgba(150,140,205,.9)"]],
+    });
+    banks = [
+      { y: 0.575, speed: 3, bank: makeBank(Math.round(W * 1.5), Math.round(H * 0.22), { clusters: narrow ? 5 : 9, heightMax: H * 0.11, alpha: 0.85,
+        shade: [[0, "rgba(255,246,240,.95)"], [0.6, "rgba(248,210,208,.9)"], [1, "rgba(214,184,214,.85)"]] }) },
+      { y: 0.64, speed: 6, bank: makeBank(Math.round(W * 1.7), Math.round(H * 0.26), { clusters: narrow ? 5 : 10, heightMax: H * 0.13,
+        shade: [[0, "rgba(255,236,238,.98)"], [0.45, "rgba(236,196,216,.96)"], [1, "rgba(150,140,205,.95)"]] }) },
+      { y: 0.71, speed: 10, bank: makeBank(Math.round(W * 1.9), Math.round(H * 0.26), { clusters: narrow ? 5 : 11, heightMax: H * 0.12,
+        shade: [[0, "rgba(246,222,236,1)"], [0.4, "rgba(196,176,222,1)"], [1, "rgba(118,108,178,1)"]] }) },
     ];
+
+    // meadow flowers, denser and larger toward the viewer
+    const n = Math.round(clamp((W * H) / 1300, 380, 1300));
+    flowers = [];
+    for (let i = 0; i < n; i++) {
+      const x = rand(-PAD, W + PAD);
+      const top = hillY(x);
+      const d = Math.pow(Math.random(), 1.35); // 0 = crest, 1 = foreground
+      const y = top + 4 + d * (H + PAD - top);
+      flowers.push({ x, y, d, r: 0.9 + d * 3.4 + Math.random() * 1.2, c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28, a: 0.45 + d * 0.5 });
+    }
+    flowers.sort((a, b) => a.y - b.y);
+    // big out-of-focus blossoms right in front of the lens
+    fgFlowers = Array.from({ length: narrow ? 14 : 26 }, () => ({
+      x: rand(-PAD, W + PAD), y: rand(H * 0.9, H + PAD), r: rand(5, 11), c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28,
+    }));
+    // small flowers tucked around the sender so the robe sits *in* the meadow
+    for (let i = 0; i < 40; i++) {
+      const x = senderBase.x + gauss() * 150;
+      fgFlowers.push({ x, y: hillY(x) + rand(2, 22), r: rand(1.4, 3), c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28, small: true });
+    }
+    // grass blades in front of the sender so the robe settles into the meadow
+    grass = Array.from({ length: narrow ? 160 : 320 }, () => {
+      const x = senderBase.x + gauss() * (narrow ? 120 : 210);
+      return { x, y: hillY(x) + rand(2, 14), len: rand(7, 20), lean: rand(-0.45, 0.45), p: Math.random() * 6.28 };
+    });
+    motes = Array.from({ length: narrow ? 22 : 44 }, () => spawnMote(true));
+  }
+  let grass = [];
+
+  function spawnMote(anywhere) {
+    return { x: rand(0, W), y: anywhere ? rand(H * 0.5, H) : H + 10, vy: rand(8, 22), sway: rand(10, 30), p: Math.random() * 6.28, r: rand(0.8, 2.2), life: 0, max: rand(5, 10) };
   }
 
-  let t0 = performance.now(), running = true, raf;
-  function frame(now) {
-    const t = (now - t0) / 1000;
-    const sy = scrollY;
-    bctx.clearRect(0, 0, W, H);
-    fctx.clearRect(0, 0, W, H);
+  /* ---- positions (hero coords) ---- */
+  const friendPos = (f) => ({ x: f.nx * W, y: f.ny * H });
+  function svgPoint(vx, vy) {
+    const hr = hero.getBoundingClientRect(), sr = senderSvg.getBoundingClientRect();
+    return { x: sr.left - hr.left + sr.width * (vx / 300), y: sr.top - hr.top + sr.height * (vy / 360) };
+  }
+  const senderPhone = () => svgPoint(228, 196);
+  const senderHead = () => svgPoint(152, 60);
 
-    // stars
+  /* ---- drawing ---- */
+  function drawFriend(g, f, t) {
+    const { x, y } = friendPos(f);
+    const s = H * (narrow ? 0.06 : 0.075);
+    // cloud-island under their feet
+    const isl = g.createRadialGradient(x, y + s * 0.1, 0, x, y + s * 0.1, s * 1.6);
+    isl.addColorStop(0, "rgba(255,236,242,.95)"); isl.addColorStop(0.5, "rgba(236,200,222,.6)"); isl.addColorStop(1, "rgba(236,200,222,0)");
+    g.fillStyle = isl;
+    g.beginPath(); g.ellipse(x, y + s * 0.12, s * 1.7, s * 0.42, 0, 0, Math.PI * 2); g.fill();
+    // silhouette: robe + head
+    g.fillStyle = "rgba(58,54,118,.92)";
+    g.beginPath();
+    g.moveTo(x - s * 0.1, y - s * 0.78);
+    g.quadraticCurveTo(x - s * 0.24, y - s * 0.4, x - s * 0.26, y);
+    g.lineTo(x + s * 0.26, y);
+    g.quadraticCurveTo(x + s * 0.22, y - s * 0.4, x + s * 0.1, y - s * 0.78);
+    g.closePath(); g.fill();
+    g.beginPath(); g.arc(x, y - s * 0.9, s * 0.13, 0, Math.PI * 2); g.fill();
+    // phone glow
+    const glow = clamp(0.35 + 0.15 * Math.sin(t * 2 + f.nx * 9) + f.glow, 0, 1);
+    const R = s * (0.5 + f.glow * 1.4);
+    const gl = g.createRadialGradient(x + s * 0.12, y - s * 0.62, 0, x + s * 0.12, y - s * 0.62, R);
+    gl.addColorStop(0, `rgba(240,250,255,${glow})`); gl.addColorStop(1, "rgba(160,200,255,0)");
+    g.globalCompositeOperation = "lighter";
+    g.fillStyle = gl;
+    g.beginPath(); g.arc(x + s * 0.12, y - s * 0.62, R, 0, Math.PI * 2); g.fill();
+    g.globalCompositeOperation = "source-over";
+    f.glow *= 0.965;
+  }
+
+  function drawBack(t) {
+    const g = ctx.back;
+    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
     for (const s of stars) {
-      const a = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
-      bctx.fillStyle = `rgba(255,255,255,${a * 0.9})`;
-      bctx.beginPath(); bctx.arc(s.x, s.y + sy * 0.4, s.r, 0, Math.PI * 2); bctx.fill();
+      const a = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
+      g.fillStyle = `rgba(255,255,255,${a * 0.85})`;
+      g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI * 2); g.fill();
     }
-    // clouds
-    for (const L of layers) {
+    // the big cumulus on the left, breathing slowly
+    g.drawImage(tower.canvas, -W * 0.06 + Math.sin(t * 0.05) * 18, H * 0.18 + Math.sin(t * 0.07) * 6, tower.w, tower.h);
+    banks.forEach((L, i) => {
       const { canvas, w, h, alpha } = L.bank;
-      const y = H * L.y + sy * L.par - h * 0.5;
-      let x = -((t * L.speed) % w);
-      L.ctx.globalAlpha = alpha;
-      while (x < W) { L.ctx.drawImage(canvas, x, y, w, h); x += w; }
-      L.ctx.globalAlpha = 1;
+      let x = -((t * L.speed) % w) - PAD;
+      g.globalAlpha = alpha;
+      while (x < W + PAD) { g.drawImage(canvas, x, H * L.y - h * 0.62, w, h); x += w; }
+      g.globalAlpha = 1;
+      if (i === 1) { drawFriend(g, friends.left, t); drawFriend(g, friends.right, t); }
+    });
+  }
+
+  function drawMeadow(t) {
+    const g = ctx.meadow;
+    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
+    g.beginPath();
+    g.moveTo(-PAD, H + PAD);
+    for (let x = -PAD; x <= W + PAD; x += 8) g.lineTo(x, hillY(x));
+    g.lineTo(W + PAD, H + PAD); g.closePath();
+    const grd = g.createLinearGradient(0, H * 0.68, 0, H);
+    grd.addColorStop(0, "#3b3776"); grd.addColorStop(0.35, "#221f4c"); grd.addColorStop(1, "#07060f");
+    g.fillStyle = grd; g.fill();
+    // rim light along the crest
+    g.save();
+    g.beginPath();
+    for (let x = -PAD; x <= W + PAD; x += 8) { if (x === -PAD) g.moveTo(x, hillY(x) + 1); else g.lineTo(x, hillY(x) + 1); }
+    g.strokeStyle = "rgba(255,206,222,.45)"; g.lineWidth = 2; g.shadowColor = "rgba(255,190,210,.8)"; g.shadowBlur = 12; g.stroke();
+    g.restore();
+    for (const f of flowers) {
+      const fx = f.x + Math.sin(t * 1.1 + f.x * 0.012 + f.p) * (0.6 + f.d * 3.2), fy = f.y;
+      if (f.d > 0.25) {
+        g.strokeStyle = `rgba(20,18,50,${0.5 * f.a})`; g.lineWidth = 0.6 + f.d;
+        g.beginPath(); g.moveTo(f.x, fy + f.r * 3); g.lineTo(fx, fy); g.stroke();
+      }
+      g.fillStyle = `rgba(${f.c},${0.16 * f.a})`;
+      g.beginPath(); g.arc(fx, fy, f.r * 2.3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = `rgba(${f.c},${f.a})`;
+      g.beginPath(); g.arc(fx, fy, f.r, 0, Math.PI * 2); g.fill();
     }
+  }
+
+  function drawFront(t, dt) {
+    const g = ctx.front;
+    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
+    // a soft strip of meadow over the robe's hem
+    const half = narrow ? 150 : 250;
+    g.beginPath();
+    for (let x = senderBase.x - half; x <= senderBase.x + half; x += 6) {
+      const y = hillY(x) - 3 * Math.sin(Math.PI * (x - senderBase.x + half) / (half * 2));
+      if (x === senderBase.x - half) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.lineTo(senderBase.x + half, H + PAD); g.lineTo(senderBase.x - half, H + PAD); g.closePath();
+    // same colour as the hill at that height, fading out so no seam shows under parallax
+    const [cr, cg, cb] = hillColorAt(senderBase.y);
+    const hem = g.createLinearGradient(0, senderBase.y - 6, 0, senderBase.y + 44);
+    hem.addColorStop(0, `rgba(${cr},${cg},${cb},1)`); hem.addColorStop(0.45, `rgba(${cr},${cg},${cb},.9)`); hem.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    g.fillStyle = hem; g.fill();
+    g.strokeStyle = "#2d2a5e"; g.lineWidth = 1.5; g.lineCap = "round";
+    for (const b of grass) {
+      const sway = Math.sin(t * 1.3 + b.p) * 2.2;
+      g.beginPath(); g.moveTo(b.x, b.y);
+      g.quadraticCurveTo(b.x + b.lean * b.len * 0.4, b.y - b.len * 0.6, b.x + b.lean * b.len + sway, b.y - b.len);
+      g.stroke();
+    }
+    for (const f of fgFlowers) {
+      const fx = f.x + Math.sin(t * 0.9 + f.p) * (f.small ? 1.2 : 5), fy = f.y;
+      if (f.small) {
+        g.fillStyle = `rgba(${f.c},.22)`; g.beginPath(); g.arc(fx, fy, f.r * 2.3, 0, Math.PI * 2); g.fill();
+        g.fillStyle = `rgba(${f.c},.9)`; g.beginPath(); g.arc(fx, fy, f.r, 0, Math.PI * 2); g.fill();
+      } else {
+        const gr = g.createRadialGradient(fx, fy, 0, fx, fy, f.r * 2.6);
+        gr.addColorStop(0, `rgba(${f.c},.75)`); gr.addColorStop(0.45, `rgba(${f.c},.35)`); gr.addColorStop(1, `rgba(${f.c},0)`);
+        g.fillStyle = gr; g.beginPath(); g.arc(fx, fy, f.r * 2.6, 0, Math.PI * 2); g.fill();
+      }
+    }
+    // fireflies drifting up from the meadow
+    g.globalCompositeOperation = "lighter";
+    for (let i = 0; i < motes.length; i++) {
+      const m = motes[i];
+      m.life += dt; m.y -= m.vy * dt;
+      const x = m.x + Math.sin(t * 0.8 + m.p) * m.sway;
+      const a = Math.sin(Math.PI * clamp(m.life / m.max, 0, 1)) * (0.55 + 0.45 * Math.sin(t * 3 + m.p));
+      if (m.life > m.max || m.y < H * 0.35) motes[i] = spawnMote(false);
+      const gr = g.createRadialGradient(x, m.y, 0, x, m.y, m.r * 5);
+      gr.addColorStop(0, `rgba(255,236,214,${Math.max(0, a)})`); gr.addColorStop(1, "rgba(255,200,180,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(x, m.y, m.r * 5, 0, Math.PI * 2); g.fill();
+    }
+    g.globalCompositeOperation = "source-over";
+  }
+
+  /* ---- payments as comets ---- */
+  const SCRIPT = [
+    { from: "me", to: "left", av: "M", c: "#f7a8c8", title: "Maya received $40.00", note: "🌸 For the flowers" },
+    { from: "right", to: "me", av: "L", c: "#8fb3ff", title: "You received $18.40", note: "🍣 Leo · Sushi Friday" },
+    { from: "me", to: "right", av: "L", c: "#8fb3ff", title: "Leo received $12.00", note: "🚕 Half the cab home" },
+    { from: "left", to: "me", av: "M", c: "#f7a8c8", title: "You received $25.00", note: "🎂 Maya · Mia's gift fund" },
+  ];
+  let scriptIdx = 0;
+  const posOf = (who) => (who === "me" ? senderPhone() : friendPos(friends[who]));
+
+  function pulseSender() {
+    senderSvg.classList.remove("is-sending"); void senderSvg.getBoundingClientRect();
+    senderSvg.classList.add("is-sending");
+  }
+  function launch() {
+    const step = SCRIPT[scriptIdx++ % SCRIPT.length];
+    const a = posOf(step.from), b = posOf(step.to);
+    const peak = Math.min(a.y, b.y) - H * (narrow ? 0.14 : 0.2);
+    comets.push({ step, a, b, c: { x: (a.x + b.x) / 2, y: peak }, t0: performance.now(), dur: 2300 });
+    if (step.from === "me") pulseSender(); else friends[step.from].glow = 0.9;
+  }
+  let pingTimer;
+  function arrive(cm) {
+    const { b, step } = cm;
+    for (let i = 0; i < 34; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = rand(30, 140);
+      sparks.push({ x: b.x, y: b.y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 20, life: 0, max: rand(0.6, 1.4), r: rand(0.8, 2.4), hue: Math.random() });
+    }
+    rings.push({ x: b.x, y: b.y, t: 0 });
+    if (step.to === "me") pulseSender(); else friends[step.to].glow = 1.2;
+    // glass notification above whoever received it
+    // beside the sender (clear of the hero button), or above the friend
+    const head = senderHead();
+    const at = step.to === "me"
+      ? { x: head.x + (narrow ? W * 0.18 : Math.max(200, W * 0.15)), y: head.y + H * 0.08 }
+      : { x: b.x, y: b.y - H * (narrow ? 0.07 : 0.09) };
+    ping.style.left = clamp(at.x, 130, W - 130) + "px";
+    ping.style.top = at.y + "px";
+    pingAv.textContent = step.av; pingAv.style.setProperty("--c", step.c);
+    pingTitle.textContent = step.title; pingNote.textContent = step.note;
+    ping.classList.remove("is-on"); void ping.offsetWidth; ping.classList.add("is-on");
+    clearTimeout(pingTimer);
+    pingTimer = setTimeout(() => ping.classList.remove("is-on"), 2600);
+  }
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const bez = (a, c, b, t) => ({ x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y });
+
+  function drawFx(now, dt) {
+    const g = ctx.fx;
+    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
+    g.globalCompositeOperation = "lighter";
+    comets = comets.filter((cm) => {
+      const p = clamp((now - cm.t0) / cm.dur, 0, 1);
+      const h = bez(cm.a, cm.c, cm.b, ease(p));
+      g.strokeStyle = `rgba(255,236,230,${0.2 * Math.sin(Math.PI * p)})`;
+      g.lineWidth = 1; g.setLineDash([2, 6]);
+      g.beginPath(); g.moveTo(cm.a.x, cm.a.y); g.quadraticCurveTo(cm.c.x, cm.c.y, cm.b.x, cm.b.y); g.stroke();
+      g.setLineDash([]);
+      for (let k = 0; k < 3; k++) sparks.push({ x: h.x + gauss() * 3, y: h.y + gauss() * 3, vx: gauss() * 12, vy: gauss() * 12 + 6, life: 0, max: rand(0.5, 1.1), r: rand(0.6, 1.8), hue: Math.random() });
+      const gr = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, 26);
+      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.18, "rgba(255,226,210,.9)"); gr.addColorStop(0.5, "rgba(247,168,200,.35)"); gr.addColorStop(1, "rgba(160,170,255,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(h.x, h.y, 26, 0, Math.PI * 2); g.fill();
+      if (p >= 1) { arrive(cm); return false; }
+      return true;
+    });
+    sparks = sparks.filter((s) => {
+      s.life += dt; if (s.life > s.max) return false;
+      s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.96; s.vy = s.vy * 0.96 + 14 * dt;
+      const a = 1 - s.life / s.max;
+      g.fillStyle = s.hue < 0.5 ? `rgba(255,230,214,${a})` : s.hue < 0.8 ? `rgba(247,168,200,${a})` : `rgba(185,196,255,${a})`;
+      g.beginPath(); g.arc(s.x, s.y, s.r * (0.5 + a * 0.5), 0, Math.PI * 2); g.fill();
+      return true;
+    });
+    rings = rings.filter((r) => {
+      r.t += dt; if (r.t > 1) return false;
+      g.strokeStyle = `rgba(255,236,240,${(1 - r.t) * 0.8})`; g.lineWidth = 1.5;
+      g.beginPath(); g.arc(r.x, r.y, 8 + r.t * 46, 0, Math.PI * 2); g.stroke();
+      return true;
+    });
+    g.globalCompositeOperation = "source-over";
+  }
+
+  /* ---- parallax (mouse + scroll) ---- */
+  const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
+  hero.addEventListener("pointermove", (e) => {
+    const r = hero.getBoundingClientRect();
+    mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    mouse.y = ((e.clientY - r.top) / r.height) * 2 - 1;
+  });
+  hero.addEventListener("pointerleave", () => { mouse.x = 0; mouse.y = 0; });
+  function applyParallax() {
+    mouse.sx += (mouse.x - mouse.sx) * 0.05;
+    mouse.sy += (mouse.y - mouse.sy) * 0.05;
+    const sy = Math.min(scrollY, H);
+    for (const el of layers) {
+      const d = +el.dataset.depth || 0;
+      el.style.transform = `translate3d(${(-mouse.sx * d * 520).toFixed(2)}px, ${(-mouse.sy * d * 260 + sy * (0.45 - d * 5)).toFixed(2)}px, 0)`;
+    }
+  }
+
+  /* ---- loop ---- */
+  let running = true, raf, last = performance.now(), nextLaunch = performance.now() + 2200;
+  const t0 = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const t = (now - t0) / 1000;
+    if (!reduced) applyParallax();
+    drawBack(t);
+    drawMeadow(t);
+    drawFront(t, reduced ? 0 : dt);
+    drawFx(now, dt);
+    if (!reduced && now >= nextLaunch && !document.hidden) { launch(); nextLaunch = now + 3700; }
     if (running && !reduced) raf = requestAnimationFrame(frame);
   }
 
   build();
   frame(performance.now());
   let rt;
-  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { build(); frame(performance.now()); }, 200); });
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { build(); if (reduced) frame(performance.now()); }, 180); });
   new IntersectionObserver(([e]) => {
     running = e.isIntersecting;
     cancelAnimationFrame(raf);
-    if (running && !reduced) raf = requestAnimationFrame(frame);
+    if (running && !reduced) { last = performance.now(); raf = requestAnimationFrame(frame); }
   }).observe(hero);
-  return { redraw: () => reduced && frame(performance.now()) };
 })();
 
-/* ---------- Hero scroll parallax ---------- */
-const heroCopy = $(".hero__copy");
-const heroStage = $("[data-hero-stage]");
+/* ---------- Scroll: hero copy, nav, statement ---------- */
 function onScroll() {
   const y = scrollY;
   nav.classList.toggle("is-scrolled", y > 60);
   if (!menu.classList.contains("is-open")) nav.classList.toggle("is-hidden", y > lastY && y > 700);
   lastY = y;
   if (y < innerHeight * 1.4 && !reduced) {
-    heroCopy.style.transform = `translateY(${y * 0.35}px)`;
-    heroCopy.style.opacity = String(clamp(1 - y / 520, 0, 1));
-    heroStage.style.transform = `translateY(${-y * 0.18}px)`;
+    heroContent.style.transform = `translateY(${y * 0.35}px)`;
+    heroContent.style.opacity = String(clamp(1 - y / 560, 0, 1));
   }
   scrubStatement();
-  sky && sky.redraw();
 }
 let lastY = scrollY, ticking = false;
 addEventListener("scroll", () => {
@@ -233,61 +536,6 @@ addEventListener("scroll", () => {
   ticking = true;
   requestAnimationFrame(() => { onScroll(); ticking = false; });
 }, { passive: true });
-
-/* =========================================================
-   PHONE: live activity feed + balance in integer cents
-   ========================================================= */
-const FEED = [
-  { n: "Maya", c: "#f59e8b", note: "🍣 Sushi Friday", amt: 1840 },
-  { n: "Leo", c: "#8fb3ff", note: "🚕 Airport cab", amt: -1200 },
-  { n: "Priya", c: "#9be0c7", note: "🎂 Mia's gift fund", amt: -2000 },
-  { n: "Sam", c: "#ffd27a", note: "🍕 Pizza night", amt: 950 },
-  { n: "Jordan", c: "#c9a7ff", note: "🎬 Movie tickets", amt: -1500 },
-  { n: "Noah", c: "#7fd3e6", note: "⚽ 5-a-side pitch", amt: 600 },
-  { n: "Ava", c: "#f7a8c8", note: "🛒 Groceries", amt: -2375 },
-  { n: "Kai", c: "#b7e27a", note: "🏖️ Lisbon Airbnb", amt: 8200 },
-];
-const list = $("[data-activity]");
-const balEl = $("[data-balance]");
-let balance = 248016; // cents
-let feedIdx = 0;
-function feedItem(f, isNew) {
-  const li = document.createElement("li");
-  if (isNew) li.className = "is-new";
-  li.innerHTML = `<span class="av" style="--c:${f.c}">${f.n[0]}</span><div><b>${f.n}</b><small>${f.note}</small></div><em class="${f.amt > 0 ? "plus" : ""}">${f.amt > 0 ? "+" : ""}${fmtMoney(f.amt)}</em>`;
-  return li;
-}
-function tweenBalance(to) {
-  const from = balance, start = performance.now(), dur = reduced ? 1 : 900;
-  balance = to;
-  const step = (now) => {
-    const p = clamp((now - start) / dur, 0, 1);
-    const e = 1 - Math.pow(1 - p, 3);
-    balEl.textContent = fmtMoney(Math.round(from + (to - from) * e));
-    if (p < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-for (let i = 0; i < 5; i++) list.appendChild(feedItem(FEED[(feedIdx++) % FEED.length]));
-setInterval(() => {
-  if (document.hidden) return;
-  const f = FEED[(feedIdx++) % FEED.length];
-  $$("li", list).forEach((li) => li.classList.remove("is-new"));
-  list.prepend(feedItem(f, true));
-  while (list.children.length > 5) list.lastChild.remove();
-  tweenBalance(balance + f.amt);
-}, 3200);
-
-/* ---------- Hero toasts ---------- */
-const toasts = $$("[data-toast]");
-let toastIdx = 0;
-setTimeout(function cycle() {
-  const t = toasts[toastIdx % toasts.length];
-  t.classList.add("is-on");
-  setTimeout(() => t.classList.remove("is-on"), 4200);
-  toastIdx++;
-  setTimeout(cycle, 1900);
-}, 2400);
 
 /* ---------- Statement: scroll-scrubbed words ---------- */
 const scrubEl = $("[data-scrub]");
