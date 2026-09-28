@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07070a" />
+  <meta name="description" content="Your Nexus money dashboard." />
+  <title>Nexus — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./dashboard.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to dashboard</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <aside class="sidebar">
+    <a class="brand" href="./" aria-label="Nexus home">Nexus<sup>®</sup></a>
+    <nav aria-label="Dashboard navigation">
+      <a class="nav-item is-active" href="#overview"><span aria-hidden="true">⌂</span> Overview</a>
+      <a class="nav-item" href="#activity"><span aria-hidden="true">↗</span> Activity</a>
+      <a class="nav-item" href="#spending"><span aria-hidden="true">⌁</span> Insights</a>
+      <a class="nav-item" href="#cards"><span aria-hidden="true">▣</span> Cards</a>
+    </nav>
+    <div class="sidebar__bottom">
+      <a class="nav-item" href="#settings"><span aria-hidden="true">⚙</span> Settings</a>
+      <a class="profile" href="#profile"><span class="avatar avatar--me">A</span><span>Alex Morgan<small>@alex</small></span><span aria-hidden="true">⌄</span></a>
+    </div>
+  </aside>
+
+  <main id="main" class="dashboard">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Tuesday, October 14</p>
+        <h1>Good evening, <em>Alex.</em></h1>
+      </div>
+      <div class="topbar__actions">
+        <button class="icon-button" type="button" aria-label="Notifications">●</button>
+        <a class="avatar avatar--me" href="#profile" aria-label="Open profile">A</a>
+      </div>
+    </header>
+
+    <section class="balance" id="overview" aria-labelledby="balance-title">
+      <div class="balance__glow" aria-hidden="true"></div>
+      <div class="balance__top"><span id="balance-title">Available balance</span><button type="button" aria-label="Hide balance">◉</button></div>
+      <p class="balance__amount">$2,480<span>.16</span></p>
+      <div class="balance__footer"><span>•••• 4821</span><span>Updated just now</span></div>
+    </section>
+
+    <section class="quick-actions" aria-label="Quick actions">
+      <a href="#send"><span class="quick-actions__icon">↑</span><span>Send</span></a>
+      <a href="#request"><span class="quick-actions__icon">↓</span><span>Request</span></a>
+      <a href="#split"><span class="quick-actions__icon">÷</span><span>Split</span></a>
+      <a href="#scan"><span class="quick-actions__icon">⌗</span><span>Scan</span></a>
+    </section>
+
+    <div class="grid">
+      <section class="panel activity" id="activity" aria-labelledby="activity-title">
+        <div class="panel__heading"><div><p class="eyebrow">Latest activity</p><h2 id="activity-title">Money in motion.</h2></div><a href="#all-activity">See all <span aria-hidden="true">→</span></a></div>
+        <ul class="transactions">
+          <li><span class="avatar" style="--avatar:#f59e8b">M</span><div><b>Maya Torres</b><small>🍣 Sushi Friday · Today</small></div><strong class="is-positive">+$18.40</strong></li>
+          <li><span class="avatar" style="--avatar:#8fb3ff">L</span><div><b>Leo Chen</b><small>🚕 Ride home · Yesterday</small></div><strong>−$12.00</strong></li>
+          <li><span class="avatar" style="--avatar:#9be0c7">P</span><div><b>Priya Shah</b><small>🎂 Birthday dinner · Oct 11</small></div><strong>−$20.00</strong></li>
+          <li><span class="avatar" style="--avatar:#c9a7ff">J</span><div><b>Jordan Lee</b><small>🎬 Movie tickets · Oct 9</small></div><strong class="is-positive">+$15.00</strong></li>
+        </ul>
+      </section>
+
+      <section class="panel insights" id="spending" aria-labelledby="insights-title">
+        <div class="panel__heading"><div><p class="eyebrow">This month</p><h2 id="insights-title">$384.62 spent</h2></div><span class="trend">↓ 12.4%</span></div>
+        <div class="chart" role="img" aria-label="Spending is trending lower over the last seven days">
+          <div class="chart__labels"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+          <svg viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c7ff" stop-opacity=".32" /><stop offset="1" stop-color="#b9c7ff" stop-opacity="0" /></linearGradient></defs><path class="chart__area" d="M0,82 C35,76 52,44 86,62 S138,137 181,100 S235,54 271,74 S336,127 373,84 S431,23 465,47 S515,101 560,24 L560,180 L0,180Z" /><path class="chart__line" d="M0,82 C35,76 52,44 86,62 S138,137 181,100 S235,54 271,74 S336,127 373,84 S431,23 465,47 S515,101 560,24" /></svg>
+        </div>
+        <div class="insights__caption"><span><i></i> Spending</span><span>vs. $439 last month</span></div>
+      </section>
+
+      <section class="panel card" id="cards" aria-labelledby="card-title">
+        <div class="panel__heading"><div><p class="eyebrow">Nexus card</p><h2 id="card-title">Ready when you are.</h2></div><button class="more" type="button" aria-label="More card options">•••</button></div>
+        <div class="card__visual"><span class="card__chip" aria-hidden="true"></span><b>Nexus</b><div><span>VIRTUAL</span><span>•••• 4821</span></div></div>
+        <a class="card__link" href="#manage-card">Manage card <span aria-hidden="true">→</span></a>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
