@@ -1,0 +1,12 @@
+---
+description: Keep project changes in the smallest practical commits before pushing
+alwaysApply: true
+---
+
+# Commit Granularity
+
+- Before every push, divide completed work into as many small, coherent commits as practical.
+- Each commit must be independently buildable and should represent one focused change (for example: a data model, an implementation unit, tests, documentation, or a follow-up fix).
+- Prefer several reviewable commits over one broad commit; do not combine unrelated changes.
+- Run the relevant verification before committing when feasible, and do not split commits in a way that knowingly leaves a broken intermediate revision.
+- State the commit breakdown and commit hashes in the final handoff after a push.

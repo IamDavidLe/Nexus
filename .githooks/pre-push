@@ -1,0 +1,54 @@
+#!/bin/bash
+set -euo pipefail
+
+# Pre-push hook: ensure many small commits by splitting staged changes
+# - If there are staged changes, commit each staged file separately.
+# - If there are no staged changes but the last commit touched multiple files
+#   and is not pushed yet, split that commit into one commit per file.
+
+staged_files=$(git diff --name-only --cached || true)
+if [ -n "$staged_files" ]; then
+  echo "Found staged changes; committing each file separately..."
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    git add -- "$f"
+    git commit -m "work: $f"
+  done <<< "$staged_files"
+  echo "Created individual commits for staged files."
+  exit 0
+fi
+
+# No staged files — consider splitting the last commit
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true)
+if [ -n "$upstream" ]; then
+  ahead=$(git rev-list --count "$upstream..HEAD")
+else
+  ahead=1
+fi
+
+last_files=$(git show --name-only --pretty=format: HEAD | sed '/^$/d' || true)
+file_count=0
+if [ -n "$last_files" ]; then
+  file_count=$(echo "$last_files" | wc -l | tr -d ' ')
+fi
+
+if [ "$file_count" -le 1 ]; then
+  # Nothing to do
+  exit 0
+fi
+
+if [ "$ahead" -gt 0 ]; then
+  echo "Splitting last local commit into $file_count commits..."
+  git reset --soft HEAD~1
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    git add -- "$f"
+    git commit -m "work: $f"
+  done <<< "$last_files"
+  echo "Split commit created. If the original commit was already pushed, you'll need to force-push."
+  exit 0
+else
+  echo "Last commit has been pushed to upstream; aborting to avoid rewriting shared history."
+  echo "If you really want to split it, do so manually and force-push."
+  exit 1
+fi
