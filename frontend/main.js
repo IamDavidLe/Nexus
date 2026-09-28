@@ -14,7 +14,7 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ---------- Word splitting ---------- */
 $$(".hero__title .hw").forEach((w, i) => w.style.setProperty("--i", i));
 
-function splitWords(el, cls) {
+function splitWords(el, cls, mask = false) {
   const walk = (node, italic) => {
     [...node.childNodes].forEach((n) => {
       if (n.nodeType === 3) {
@@ -25,7 +25,8 @@ function splitWords(el, cls) {
           const s = document.createElement("span");
           s.className = cls + (italic ? " em" : "");
           s.textContent = part;
-          frag.appendChild(s);
+          if (mask) { const m = document.createElement("span"); m.className = "wdm"; m.appendChild(s); frag.appendChild(m); }
+          else frag.appendChild(s);
         });
         n.replaceWith(frag);
       } else if (n.nodeType === 1 && n.tagName !== "BR") {
@@ -37,7 +38,7 @@ function splitWords(el, cls) {
   $$("." + cls, el).forEach((s, i) => s.style.setProperty("--i", i));
   return $$("." + cls, el);
 }
-$$("[data-words]").forEach((el) => splitWords(el, "wd"));
+$$("[data-words]").forEach((el) => splitWords(el, "wd", true));
 
 /* ---------- Reveal on scroll ---------- */
 const io = new IntersectionObserver((entries) => {
@@ -167,7 +168,7 @@ const world = (() => {
 
   // colour of the hill gradient (#3b3776 → #221f4c → #07060f over .68H..H) at height y
   function hillColorAt(y) {
-    const stops = [[0, [59, 55, 118]], [0.35, [34, 31, 76]], [1, [7, 6, 15]]];
+    const stops = [[0, [38, 74, 154]], [0.35, [21, 41, 94]], [1, [4, 10, 26]]];
     const t = clamp((y - H * 0.68) / (H * 0.32), 0, 1);
     let i = 0;
     while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
@@ -176,7 +177,7 @@ const world = (() => {
     return c0.map((v, j) => Math.round(v + (c1[j] - v) * k));
   }
 
-  const PETALS = ["245,163,199", "255,143,177", "185,164,255", "143,176,255", "255,236,244", "250,196,170"];
+  const PETALS = ["255,255,255", "226,238,255", "191,219,254", "147,197,253", "96,165,250", "59,130,246"];
 
   function build() {
     dpr = Math.min(devicePixelRatio || 1, 1.5);
@@ -211,15 +212,15 @@ const world = (() => {
 
     tower = makeBank(Math.round(W * (narrow ? 0.9 : 0.62)), Math.round(H * 0.6), {
       clusters: 3, heightMax: H * 0.16, towerAt: 0.42, flat: 0.8,
-      shade: [[0, "rgba(255,247,250,.98)"], [0.35, "rgba(250,214,226,.97)"], [0.7, "rgba(206,178,222,.95)"], [1, "rgba(150,140,205,.9)"]],
+      shade: [[0, "rgba(255,255,255,.99)"], [0.35, "rgba(240,246,255,.97)"], [0.7, "rgba(196,218,250,.95)"], [1, "rgba(132,164,230,.9)"]],
     });
     banks = [
       { y: 0.575, speed: 3, bank: makeBank(Math.round(W * 1.5), Math.round(H * 0.22), { clusters: narrow ? 5 : 9, heightMax: H * 0.11, alpha: 0.85,
-        shade: [[0, "rgba(255,246,240,.95)"], [0.6, "rgba(248,210,208,.9)"], [1, "rgba(214,184,214,.85)"]] }) },
+        shade: [[0, "rgba(255,255,255,.96)"], [0.6, "rgba(228,240,255,.92)"], [1, "rgba(186,210,248,.85)"]] }) },
       { y: 0.64, speed: 6, bank: makeBank(Math.round(W * 1.7), Math.round(H * 0.26), { clusters: narrow ? 5 : 10, heightMax: H * 0.13,
-        shade: [[0, "rgba(255,236,238,.98)"], [0.45, "rgba(236,196,216,.96)"], [1, "rgba(150,140,205,.95)"]] }) },
+        shade: [[0, "rgba(255,255,255,.98)"], [0.45, "rgba(214,230,255,.96)"], [1, "rgba(124,160,228,.95)"]] }) },
       { y: 0.71, speed: 10, bank: makeBank(Math.round(W * 1.9), Math.round(H * 0.26), { clusters: narrow ? 5 : 11, heightMax: H * 0.12,
-        shade: [[0, "rgba(246,222,236,1)"], [0.4, "rgba(196,176,222,1)"], [1, "rgba(118,108,178,1)"]] }) },
+        shade: [[0, "rgba(236,244,255,1)"], [0.4, "rgba(172,200,244,1)"], [1, "rgba(80,116,200,1)"]] }) },
     ];
 
     // meadow flowers, denser and larger toward the viewer
@@ -248,8 +249,39 @@ const world = (() => {
       return { x, y: hillY(x) + rand(2, 14), len: rand(7, 20), lean: rand(-0.45, 0.45), p: Math.random() * 6.28 };
     });
     motes = Array.from({ length: narrow ? 22 : 44 }, () => spawnMote(true));
+    // individual puffs in the cloud sea that react to the cursor and to clicks
+    puffs = Array.from({ length: narrow ? 14 : 30 }, () => {
+      const x = rand(-PAD, W + PAD), y = H * rand(0.56, 0.72);
+      return { hx: x, hy: y, x, y, vx: 0, vy: 0, r: rand(26, 64) * (narrow ? 0.75 : 1), glow: 0, p: Math.random() * 6.28, sp: rand(4, 10) };
+    });
   }
-  let grass = [];
+
+  function drawPuffs(g, t) {
+    const dt = frameDt, span = W + PAD * 2, damp = Math.pow(0.9, dt * 60);
+    for (const p of puffs) {
+      p.hx += p.sp * dt;
+      if (p.hx - p.r > W + PAD) { p.hx -= span + p.r * 2; p.x -= span + p.r * 2; }
+      if (mouse.inside) {
+        const dx = p.x - mouse.px, dy = p.y - mouse.py, d = Math.hypot(dx, dy) || 1, R = 190 + p.r;
+        if (d < R) { const f = 1 - d / R; p.vx += (dx / d) * f * 1100 * dt; p.vy += (dy / d) * f * 700 * dt; p.glow = Math.max(p.glow, f); }
+      }
+      p.vx += (p.hx - p.x) * 5 * dt; p.vy += (p.hy + Math.sin(t * 0.6 + p.p) * 6 - p.y) * 5 * dt;
+      p.vx *= damp; p.vy *= damp;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.glow *= Math.pow(0.94, dt * 60);
+      const gr = g.createRadialGradient(p.x, p.y - p.r * 0.2, 0, p.x, p.y, p.r);
+      gr.addColorStop(0, "rgba(255,255,255,.95)"); gr.addColorStop(0.55, "rgba(236,244,255,.85)"); gr.addColorStop(0.82, "rgba(186,210,250,.35)"); gr.addColorStop(1, "rgba(186,210,250,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI * 2); g.fill();
+      if (p.glow > 0.02) {
+        g.globalCompositeOperation = "lighter";
+        const hg = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 1.5);
+        hg.addColorStop(0, `rgba(191,219,254,${p.glow * 0.45})`); hg.addColorStop(1, "rgba(191,219,254,0)");
+        g.fillStyle = hg; g.beginPath(); g.arc(p.x, p.y, p.r * 1.5, 0, Math.PI * 2); g.fill();
+        g.globalCompositeOperation = "source-over";
+      }
+    }
+  }
+  let grass = [], puffs = [], frameDt = 0;
 
   function spawnMote(anywhere) {
     return { x: rand(0, W), y: anywhere ? rand(H * 0.5, H) : H + 10, vy: rand(8, 22), sway: rand(10, 30), p: Math.random() * 6.28, r: rand(0.8, 2.2), life: 0, max: rand(5, 10) };
@@ -270,11 +302,11 @@ const world = (() => {
     const s = H * (narrow ? 0.06 : 0.075);
     // cloud-island under their feet
     const isl = g.createRadialGradient(x, y + s * 0.1, 0, x, y + s * 0.1, s * 1.6);
-    isl.addColorStop(0, "rgba(255,236,242,.95)"); isl.addColorStop(0.5, "rgba(236,200,222,.6)"); isl.addColorStop(1, "rgba(236,200,222,0)");
+    isl.addColorStop(0, "rgba(255,255,255,.95)"); isl.addColorStop(0.5, "rgba(206,224,255,.6)"); isl.addColorStop(1, "rgba(206,224,255,0)");
     g.fillStyle = isl;
     g.beginPath(); g.ellipse(x, y + s * 0.12, s * 1.7, s * 0.42, 0, 0, Math.PI * 2); g.fill();
     // silhouette: robe + head
-    g.fillStyle = "rgba(58,54,118,.92)";
+    g.fillStyle = "rgba(24,50,128,.92)";
     g.beginPath();
     g.moveTo(x - s * 0.1, y - s * 0.78);
     g.quadraticCurveTo(x - s * 0.24, y - s * 0.4, x - s * 0.26, y);
@@ -310,7 +342,7 @@ const world = (() => {
       g.globalAlpha = alpha;
       while (x < W + PAD) { g.drawImage(canvas, x, H * L.y - h * 0.62, w, h); x += w; }
       g.globalAlpha = 1;
-      if (i === 1) { drawFriend(g, friends.left, t); drawFriend(g, friends.right, t); }
+      if (i === 1) { drawPuffs(g, t); drawFriend(g, friends.left, t); drawFriend(g, friends.right, t); }
     });
   }
 
@@ -322,18 +354,18 @@ const world = (() => {
     for (let x = -PAD; x <= W + PAD; x += 8) g.lineTo(x, hillY(x));
     g.lineTo(W + PAD, H + PAD); g.closePath();
     const grd = g.createLinearGradient(0, H * 0.68, 0, H);
-    grd.addColorStop(0, "#3b3776"); grd.addColorStop(0.35, "#221f4c"); grd.addColorStop(1, "#07060f");
+    grd.addColorStop(0, "#264a9a"); grd.addColorStop(0.35, "#15295e"); grd.addColorStop(1, "#040a1a");
     g.fillStyle = grd; g.fill();
     // rim light along the crest
     g.save();
     g.beginPath();
     for (let x = -PAD; x <= W + PAD; x += 8) { if (x === -PAD) g.moveTo(x, hillY(x) + 1); else g.lineTo(x, hillY(x) + 1); }
-    g.strokeStyle = "rgba(255,206,222,.45)"; g.lineWidth = 2; g.shadowColor = "rgba(255,190,210,.8)"; g.shadowBlur = 12; g.stroke();
+    g.strokeStyle = "rgba(214,232,255,.55)"; g.lineWidth = 2; g.shadowColor = "rgba(170,205,255,.85)"; g.shadowBlur = 12; g.stroke();
     g.restore();
     for (const f of flowers) {
       const fx = f.x + Math.sin(t * 1.1 + f.x * 0.012 + f.p) * (0.6 + f.d * 3.2), fy = f.y;
       if (f.d > 0.25) {
-        g.strokeStyle = `rgba(20,18,50,${0.5 * f.a})`; g.lineWidth = 0.6 + f.d;
+        g.strokeStyle = `rgba(8,20,58,${0.5 * f.a})`; g.lineWidth = 0.6 + f.d;
         g.beginPath(); g.moveTo(f.x, fy + f.r * 3); g.lineTo(fx, fy); g.stroke();
       }
       g.fillStyle = `rgba(${f.c},${0.16 * f.a})`;
@@ -359,7 +391,7 @@ const world = (() => {
     const hem = g.createLinearGradient(0, senderBase.y - 6, 0, senderBase.y + 44);
     hem.addColorStop(0, `rgba(${cr},${cg},${cb},1)`); hem.addColorStop(0.45, `rgba(${cr},${cg},${cb},.9)`); hem.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
     g.fillStyle = hem; g.fill();
-    g.strokeStyle = "#2d2a5e"; g.lineWidth = 1.5; g.lineCap = "round";
+    g.strokeStyle = `rgb(${cr},${cg},${cb})`; g.lineWidth = 1.5; g.lineCap = "round";
     for (const b of grass) {
       const sway = Math.sin(t * 1.3 + b.p) * 2.2;
       g.beginPath(); g.moveTo(b.x, b.y);
@@ -386,7 +418,7 @@ const world = (() => {
       const a = Math.sin(Math.PI * clamp(m.life / m.max, 0, 1)) * (0.55 + 0.45 * Math.sin(t * 3 + m.p));
       if (m.life > m.max || m.y < H * 0.35) motes[i] = spawnMote(false);
       const gr = g.createRadialGradient(x, m.y, 0, x, m.y, m.r * 5);
-      gr.addColorStop(0, `rgba(255,236,214,${Math.max(0, a)})`); gr.addColorStop(1, "rgba(255,200,180,0)");
+      gr.addColorStop(0, `rgba(230,242,255,${Math.max(0, a)})`); gr.addColorStop(1, "rgba(150,190,255,0)");
       g.fillStyle = gr; g.beginPath(); g.arc(x, m.y, m.r * 5, 0, Math.PI * 2); g.fill();
     }
     g.globalCompositeOperation = "source-over";
@@ -394,10 +426,10 @@ const world = (() => {
 
   /* ---- payments as comets ---- */
   const SCRIPT = [
-    { from: "me", to: "left", av: "M", c: "#f7a8c8", title: "Maya received $40.00", note: "🌸 For the flowers" },
-    { from: "right", to: "me", av: "L", c: "#8fb3ff", title: "You received $18.40", note: "🍣 Leo · Sushi Friday" },
-    { from: "me", to: "right", av: "L", c: "#8fb3ff", title: "Leo received $12.00", note: "🚕 Half the cab home" },
-    { from: "left", to: "me", av: "M", c: "#f7a8c8", title: "You received $25.00", note: "🎂 Maya · Mia's gift fund" },
+    { from: "me", to: "left", av: "M", c: "#bfdbfe", title: "Maya received $40.00", note: "🌸 For the flowers" },
+    { from: "right", to: "me", av: "L", c: "#93c5fd", title: "You received $18.40", note: "🍣 Leo · Sushi Friday" },
+    { from: "me", to: "right", av: "L", c: "#93c5fd", title: "Leo received $12.00", note: "🚕 Half the cab home" },
+    { from: "left", to: "me", av: "M", c: "#bfdbfe", title: "You received $25.00", note: "🎂 Maya · Mia's gift fund" },
   ];
   let scriptIdx = 0;
   const posOf = (who) => (who === "me" ? senderPhone() : friendPos(friends[who]));
@@ -421,6 +453,7 @@ const world = (() => {
       sparks.push({ x: b.x, y: b.y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 20, life: 0, max: rand(0.6, 1.4), r: rand(0.8, 2.4), hue: Math.random() });
     }
     rings.push({ x: b.x, y: b.y, t: 0 });
+    if (!step) return; // a spark the visitor sent into the sky
     if (step.to === "me") pulseSender(); else friends[step.to].glow = 1.2;
     // glass notification above whoever received it
     // beside the sender (clear of the hero button), or above the friend
@@ -443,16 +476,21 @@ const world = (() => {
     const g = ctx.fx;
     g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
     g.globalCompositeOperation = "lighter";
+    if (mouse.inside && !narrow) {
+      const cg = g.createRadialGradient(mouse.px, mouse.py, 0, mouse.px, mouse.py, 150);
+      cg.addColorStop(0, "rgba(219,234,254,.14)"); cg.addColorStop(1, "rgba(219,234,254,0)");
+      g.fillStyle = cg; g.beginPath(); g.arc(mouse.px, mouse.py, 150, 0, Math.PI * 2); g.fill();
+    }
     comets = comets.filter((cm) => {
       const p = clamp((now - cm.t0) / cm.dur, 0, 1);
       const h = bez(cm.a, cm.c, cm.b, ease(p));
-      g.strokeStyle = `rgba(255,236,230,${0.2 * Math.sin(Math.PI * p)})`;
+      g.strokeStyle = `rgba(219,234,254,${0.25 * Math.sin(Math.PI * p)})`;
       g.lineWidth = 1; g.setLineDash([2, 6]);
       g.beginPath(); g.moveTo(cm.a.x, cm.a.y); g.quadraticCurveTo(cm.c.x, cm.c.y, cm.b.x, cm.b.y); g.stroke();
       g.setLineDash([]);
       for (let k = 0; k < 3; k++) sparks.push({ x: h.x + gauss() * 3, y: h.y + gauss() * 3, vx: gauss() * 12, vy: gauss() * 12 + 6, life: 0, max: rand(0.5, 1.1), r: rand(0.6, 1.8), hue: Math.random() });
       const gr = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, 26);
-      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.18, "rgba(255,226,210,.9)"); gr.addColorStop(0.5, "rgba(247,168,200,.35)"); gr.addColorStop(1, "rgba(160,170,255,0)");
+      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.18, "rgba(219,234,254,.95)"); gr.addColorStop(0.5, "rgba(96,165,250,.4)"); gr.addColorStop(1, "rgba(59,130,246,0)");
       g.fillStyle = gr; g.beginPath(); g.arc(h.x, h.y, 26, 0, Math.PI * 2); g.fill();
       if (p >= 1) { arrive(cm); return false; }
       return true;
@@ -461,13 +499,13 @@ const world = (() => {
       s.life += dt; if (s.life > s.max) return false;
       s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.96; s.vy = s.vy * 0.96 + 14 * dt;
       const a = 1 - s.life / s.max;
-      g.fillStyle = s.hue < 0.5 ? `rgba(255,230,214,${a})` : s.hue < 0.8 ? `rgba(247,168,200,${a})` : `rgba(185,196,255,${a})`;
+      g.fillStyle = s.hue < 0.5 ? `rgba(255,255,255,${a})` : s.hue < 0.8 ? `rgba(147,197,253,${a})` : `rgba(96,165,250,${a})`;
       g.beginPath(); g.arc(s.x, s.y, s.r * (0.5 + a * 0.5), 0, Math.PI * 2); g.fill();
       return true;
     });
     rings = rings.filter((r) => {
       r.t += dt; if (r.t > 1) return false;
-      g.strokeStyle = `rgba(255,236,240,${(1 - r.t) * 0.8})`; g.lineWidth = 1.5;
+      g.strokeStyle = `rgba(219,234,254,${(1 - r.t) * 0.85})`; g.lineWidth = 1.5;
       g.beginPath(); g.arc(r.x, r.y, 8 + r.t * 46, 0, Math.PI * 2); g.stroke();
       return true;
     });
@@ -475,13 +513,28 @@ const world = (() => {
   }
 
   /* ---- parallax (mouse + scroll) ---- */
-  const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
+  const mouse = { x: 0, y: 0, sx: 0, sy: 0, px: -999, py: -999, inside: false };
   hero.addEventListener("pointermove", (e) => {
     const r = hero.getBoundingClientRect();
     mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
     mouse.y = ((e.clientY - r.top) / r.height) * 2 - 1;
+    mouse.px = e.clientX - r.left; mouse.py = e.clientY - r.top; mouse.inside = true;
   });
-  hero.addEventListener("pointerleave", () => { mouse.x = 0; mouse.y = 0; });
+  hero.addEventListener("pointerleave", () => { mouse.x = 0; mouse.y = 0; mouse.inside = false; });
+  hero.addEventListener("click", (e) => {
+    if (e.target.closest("a, button")) return;
+    const r = hero.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+    for (const p of puffs) {
+      const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1;
+      if (d < 340) { const f = 1 - d / 340; p.vx += (dx / d) * f * 900; p.vy += (dy / d) * f * 600; p.glow = Math.max(p.glow, f); }
+    }
+    rings.push({ x, y, t: 0 });
+    if (reduced || comets.length > 5) return;
+    const a = senderPhone();
+    comets.push({ step: null, a, b: { x, y }, c: { x: (a.x + x) / 2, y: Math.min(a.y, y) - H * 0.12 }, t0: performance.now(), dur: 1100 });
+    pulseSender();
+  });
   function applyParallax() {
     mouse.sx += (mouse.x - mouse.sx) * 0.05;
     mouse.sy += (mouse.y - mouse.sy) * 0.05;
@@ -497,6 +550,7 @@ const world = (() => {
   const t0 = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    frameDt = reduced ? 0 : dt;
     const t = (now - t0) / 1000;
     if (!reduced) applyParallax();
     drawBack(t);
@@ -540,7 +594,6 @@ addEventListener("scroll", () => {
 /* ---------- Statement: scroll-scrubbed words ---------- */
 const scrubEl = $("[data-scrub]");
 const scrubWords = scrubEl ? splitWords(scrubEl, "sw") : [];
-scrubWords.slice(-3).forEach((w) => w.classList.add("em"));
 function scrubStatement() {
   if (!scrubEl) return;
   const r = scrubEl.getBoundingClientRect();
@@ -548,6 +601,143 @@ function scrubStatement() {
   const lit = reduced ? scrubWords.length : Math.round(p * scrubWords.length);
   scrubWords.forEach((w, i) => w.classList.toggle("lit", i < lit));
 }
+
+/* =========================================================
+   TRANSACTION POP-UP (phone activity + community feed)
+   ========================================================= */
+const fmt = (cents) => `$${Math.floor(Math.abs(cents) / 100).toLocaleString("en-US")}.${String(Math.abs(cents) % 100).padStart(2, "0")}`;
+const hex4 = () => Math.random().toString(16).slice(2, 6).toUpperCase().padEnd(4, "0");
+const txm = $("[data-txm]");
+const txmCard = $(".txm__card", txm);
+const txmF = {
+  av: $("[data-txm-av]"), label: $("[data-txm-label]"), amt: $("[data-txm-amt]"), note: $("[data-txm-note]"),
+  when: $("[data-txm-when]"), id: $("[data-txm-id]"), sparks: $("[data-txm-sparks]"),
+};
+let txmReturn = null, txmAnim = 0;
+
+function openTx(tx, originEl) {
+  txmReturn = originEl || document.activeElement;
+  // the card grows out of whatever was clicked
+  if (originEl) {
+    const r = originEl.getBoundingClientRect();
+    txmCard.style.setProperty("--fx", `${Math.round(r.left + r.width / 2 - innerWidth / 2)}px`);
+    txmCard.style.setProperty("--fy", `${Math.round(r.top + r.height / 2 - innerHeight / 2)}px`);
+  }
+  txmF.av.textContent = tx.av; txmF.av.style.setProperty("--c", tx.c);
+  txmF.label.textContent = tx.label; txmF.note.textContent = tx.note; txmF.when.textContent = tx.when;
+  txmF.id.textContent = tx.id || (tx.id = `NX-${hex4()}-${hex4()}`);
+  const sign = tx.signed ? (tx.amt > 0 ? "+" : "−") : "";
+  cancelAnimationFrame(txmAnim);
+  const start = performance.now(), target = Math.abs(tx.amt), dur = reduced ? 1 : 900;
+  const count = (now) => {
+    const p = clamp((now - start) / dur, 0, 1);
+    txmF.amt.textContent = sign + fmt(Math.round(target * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) txmAnim = requestAnimationFrame(count);
+  };
+  txmAnim = requestAnimationFrame(count);
+  txmF.sparks.innerHTML = Array.from({ length: 16 }, (_, i) => {
+    const a = (i / 16) * Math.PI * 2 + Math.random() * 0.3, d = 70 + Math.random() * 60;
+    return `<i style="--sx:${(Math.cos(a) * d).toFixed(1)}px;--sy:${(Math.sin(a) * d).toFixed(1)}px;--c:${i % 2 ? "#ffffff" : "#93c5fd"}"></i>`;
+  }).join("");
+  txm.classList.remove("is-open"); void txmCard.offsetWidth;
+  txm.classList.add("is-open");
+  txm.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $(".txm__x", txm).focus({ preventScroll: true }), 80);
+}
+function closeTx() {
+  if (!txm.classList.contains("is-open")) return;
+  txm.classList.remove("is-open");
+  txm.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+  if (txmReturn && txmReturn.isConnected) txmReturn.focus({ preventScroll: true });
+}
+$$("[data-txm-close]", txm).forEach((b) => b.addEventListener("click", closeTx));
+addEventListener("keydown", (e) => {
+  if (!txm.classList.contains("is-open")) return;
+  if (e.key === "Escape") closeTx();
+  if (e.key === "Tab") { // keep focus inside the dialog
+    const f = $$("button", txmCard);
+    const i = f.indexOf(document.activeElement);
+    if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+  }
+});
+function ripple(btn, e) {
+  const r = btn.getBoundingClientRect();
+  const s = document.createElement("span");
+  s.className = "tx__ripple";
+  s.style.left = `${(e.clientX || r.left + r.width / 2) - r.left}px`;
+  s.style.top = `${(e.clientY || r.top + r.height / 2) - r.top}px`;
+  btn.appendChild(s);
+  setTimeout(() => s.remove(), 650);
+}
+
+/* =========================================================
+   LIVE PHONE (2nd slide): payments arrive, balance ticks,
+   every row opens the pop-up
+   ========================================================= */
+const FEED = [
+  { n: "Maya", c: "#bfdbfe", note: "🍣 Sushi Friday", amt: 1840 },
+  { n: "Leo", c: "#93c5fd", note: "🚕 Airport cab", amt: -1200 },
+  { n: "Priya", c: "#7dd3fc", note: "🎂 Mia's gift fund", amt: -2000 },
+  { n: "Sam", c: "#dbeafe", note: "🍕 Pizza night", amt: 950 },
+  { n: "Jordan", c: "#a5b4fc", note: "🎬 Movie tickets", amt: -1500 },
+  { n: "Noah", c: "#60a5fa", note: "⚽ 5-a-side pitch", amt: 600 },
+  { n: "Ava", c: "#c7d2fe", note: "🛒 Groceries", amt: -2375 },
+  { n: "Kai", c: "#e0f2fe", note: "🏖️ Lisbon Airbnb", amt: 8200 },
+];
+const TIMES = ["Today, 6:48 PM", "Today, 5:12 PM", "Today, 1:30 PM", "Today, 9:05 AM", "Yesterday, 8:14 PM"];
+const list = $("[data-activity]");
+const balEl = $("[data-balance]");
+let balance = 248016; // integer cents
+let feedIdx = 0;
+function feedItem(f, when, isNew) {
+  const tx = { av: f.n[0], c: f.c, label: f.amt > 0 ? `${f.n} paid you` : `You paid ${f.n}`, note: f.note, amt: f.amt, when, signed: true };
+  const li = document.createElement("li");
+  if (isNew) li.className = "is-new";
+  li.innerHTML = `<button class="tx" type="button" aria-label="${tx.label} ${fmt(f.amt)}, ${f.note}"><span class="av" style="--c:${f.c}">${f.n[0]}</span><div><b>${f.n}</b><small>${f.note}</small></div><em class="${f.amt > 0 ? "plus" : ""}">${f.amt > 0 ? "+" : "−"}${fmt(f.amt)}</em></button>`;
+  const btn = li.firstElementChild;
+  btn.addEventListener("click", (e) => { ripple(btn, e); setTimeout(() => openTx(tx, btn), reduced ? 0 : 160); });
+  return li;
+}
+function tweenBalance(to) {
+  const from = balance, start = performance.now(), dur = reduced ? 1 : 900;
+  balance = to;
+  const step = (now) => {
+    const p = clamp((now - start) / dur, 0, 1);
+    balEl.textContent = fmt(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+if (list) {
+  for (let i = 0; i < 5; i++) list.appendChild(feedItem(FEED[(feedIdx++) % FEED.length], TIMES[i], false));
+  let phoneVisible = false;
+  new IntersectionObserver(([e]) => (phoneVisible = e.isIntersecting), { threshold: 0.2 }).observe(list);
+  setInterval(() => {
+    if (document.hidden || !phoneVisible || txm.classList.contains("is-open")) return;
+    const f = FEED[(feedIdx++) % FEED.length];
+    $$("li", list).forEach((li) => li.classList.remove("is-new"));
+    list.prepend(feedItem(f, "Just now", true));
+    while (list.children.length > 5) list.lastChild.remove();
+    tweenBalance(balance + f.amt);
+  }, 3400);
+}
+
+// floating notifications beside the phone take turns
+(() => {
+  const toasts = $$("[data-toast]");
+  if (!toasts.length) return;
+  if (reduced) { toasts.forEach((t) => t.classList.add("is-on")); return; }
+  let k = 0;
+  const cycle = () => {
+    const t = toasts[k++ % toasts.length];
+    t.classList.add("is-on");
+    setTimeout(() => t.classList.remove("is-on"), 3600);
+  };
+  setTimeout(() => { cycle(); setInterval(cycle, 2300); }, 1200);
+})();
 
 /* =========================================================
    FEATURES: auto-advancing tabs + scene choreography
@@ -687,24 +877,45 @@ $$("[data-count]").forEach((el) => countIO.observe(el));
 
 /* ---------- Feed marquee ---------- */
 const POSTS = [
-  ["🍕", "Sam paid Priya", "Friday pizza, the good one"],
-  ["🚕", "You & Leo", "Airport cab at 5am"],
-  ["🏠", "Rent · 4 roommates", "Split evenly · $612.50 each"],
-  ["🎂", "Mia's gift fund", "12 friends chipped in"],
-  ["☕", "Noah paid you", "Coffee run, you owe me nothing"],
-  ["🎟️", "Ava paid Kai", "Front row, no regrets"],
-  ["🛒", "Groceries", "Split 3 ways · $28.14 each"],
-  ["🏖️", "Lisbon trip", "Settled up · 6 people"],
-  ["⚽", "5-a-side pitch", "Jordan collected $60"],
-  ["🍜", "Ramen night", "Maya paid Alex"],
-  ["🎸", "Band practice room", "Split 4 ways"],
-  ["🐶", "Dog-sitting", "Thanks for Mochi ❤️"],
+  ["🍕", "Sam paid Priya", "Friday pizza, the good one", 2400],
+  ["🚕", "You & Leo", "Airport cab at 5am", -1450],
+  ["🏠", "Rent · 4 roommates", "Split evenly · $612.50 each", -61250],
+  ["🎂", "Mia's gift fund", "12 friends chipped in", -2000],
+  ["☕", "Noah paid you", "Coffee run, you owe me nothing", 540],
+  ["🎟️", "Ava paid Kai", "Front row, no regrets", 8900],
+  ["🛒", "Groceries", "Split 3 ways · $28.14 each", -2814],
+  ["🏖️", "Lisbon trip", "Settled up · 6 people", -18400],
+  ["⚽", "5-a-side pitch", "Jordan collected $60", -1000],
+  ["🍜", "Ramen night", "Maya paid Alex", 3200],
+  ["🎸", "Band practice room", "Split 4 ways", -1500],
+  ["🐶", "Dog-sitting", "Thanks for Mochi ❤️", 4000],
 ];
+const POST_TIMES = ["2h ago", "Yesterday", "3 days ago", "Last week"];
+const POST_COLORS = ["#bfdbfe", "#93c5fd", "#7dd3fc", "#a5b4fc", "#dbeafe", "#60a5fa"];
 $$("[data-marquee]").forEach((row, r) => {
-  const items = r ? [...POSTS].reverse() : POSTS;
-  const html = items.map(([e, t, s]) => `<div class="post"><span class="emo">${e}</span><div><b>${t}</b><small>${s}</small></div></div>`).join("");
-  row.innerHTML = html + html; // doubled for a seamless loop
+  const order = POSTS.map((_, i) => i);
+  if (r) order.reverse();
+  const card = (i, hidden) => {
+    const [e, t, sub] = POSTS[i];
+    return `<button class="post" type="button" data-post="${i}"${hidden ? ' tabindex="-1" aria-hidden="true"' : ""}><span class="emo">${e}</span><div><b>${t}</b><small>${sub}</small></div></button>`;
+  };
+  // doubled for a seamless loop; the second copy is hidden from keyboard/screen readers
+  row.innerHTML = order.map((i) => card(i, false)).join("") + order.map((i) => card(i, true)).join("");
+  row.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-post]");
+    if (!b) return;
+    const i = +b.dataset.post;
+    const [e, t, sub, amt] = POSTS[i];
+    openTx({ av: t[0], c: POST_COLORS[i % POST_COLORS.length], label: t, note: `${e} ${sub}`, amt, when: POST_TIMES[i % POST_TIMES.length], signed: /\byou\b/i.test(t) }, b);
+  });
 });
+
+/* ---------- Footer wordmark: letters rise in ---------- */
+const footWord = $(".footer__word");
+if (footWord) {
+  footWord.innerHTML = [...footWord.textContent.trim()].map((ch, i) => `<span class="fl" style="--i:${i}">${ch}</span>`).join("");
+  io.observe(footWord);
+}
 
 onScroll();
 setTab(0, "init");
