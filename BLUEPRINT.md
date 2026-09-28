@@ -313,3 +313,53 @@ Task files are where ALL track detail lives. They're what you paste into the roo
 | UI looks generic / broken on mobile | Verifier viewport screenshots are mandatory evidence |
 | Lint fails on a mandate | Generalize the sentence; never weaken the lint |
 | Stage N breaks stage N-1 | `extend-without-breaking.md`: previous suite green before and after |
+
+---
+
+## THREE-PERSON DELIVERY OWNERSHIP
+
+This is the human delivery team. It does not replace the five BAND seats required by Steps 19 and 42.
+
+### Person 1 — Producer and BAND operator
+
+Owns account setup, approvals, recording, room operations, and submission:
+
+- Steps 0–5, 7, 11, 17, 30, 41–42, and 55.
+- Dry-run operation: 57–58, 62, and 65.
+- Official-run operation: 73–76, 78, 80, and 82.
+- Media and submission: 92 and 94–96, 98–100.
+
+Person 1 is the only person who operates BAND during an official run. After each task dispatch, they remain hands-off until the Integrator's declared outcome.
+
+### Person 2 — Factory architect
+
+Owns the generic factory, task briefs, and judge-facing narrative:
+
+- Repo and spec work: 6, 8, 10, 12–15, and 18.
+- Factory design: 19–22 and 24, 26–29.
+- Mandates and genericness: 31–32 and 35–40.
+- Dry-run design and process changes: 56 and 59–61, 63–64.
+- Official task briefs: 66–72.
+- Packaging: 84, 86–87, 93, and 97.
+
+Person 2 writes the Planner, Builder, and Integrator mandates. Person 3 must review each for testability and genericness before it is approved.
+
+### Person 3 — Reliability and evidence lead
+
+Owns verification design, offline reliability, and release evidence:
+
+- Environment and spec limits: 9 and 16.
+- Quality protocols and mandates: 23, 25, 33–34.
+- Tooling and validation: 43–54.
+- Official-run read-only checks: 77, 79, 81, 83, and 85.
+- Final verification: 88–91.
+
+Person 3 writes the Verifier and Breaker mandates, owns the container, race, replay, viewport, and evidence tooling, and can block an incomplete stage from being presented as complete.
+
+### Handoff gates
+
+1. Person 1 completes account setup, spec intake, and BAND readiness before factory construction starts.
+2. Person 2 drafts protocols and mandates; Person 3 runs lint and swap testing; Person 1 approves the release to dry runs.
+3. Person 3 completes the reusable tooling before Person 2 freezes the official task briefs.
+4. Person 1 operates dry runs; Persons 2 and 3 independently write the post-mortem and implement generic process fixes.
+5. During official runs, Person 1 operates BAND, Person 3 performs only the specified read-only checks, and Person 2 prepares traceability and packaging artifacts.
