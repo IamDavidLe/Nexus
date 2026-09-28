@@ -9,4 +9,6 @@ alwaysApply: true
 - Each commit must be independently buildable and should represent one focused change (for example: a data model, an implementation unit, tests, documentation, or a follow-up fix).
 - Prefer several reviewable commits over one broad commit; do not combine unrelated changes.
 - Run the relevant verification before committing when feasible, and do not split commits in a way that knowingly leaves a broken intermediate revision.
+- After completing an authorized change, create the focused commits and push them to the tracked remote automatically, unless the user explicitly asks not to push.
+- Write each commit with a concise, descriptive message that explains the change.
 - State the commit breakdown and commit hashes in the final handoff after a push.
