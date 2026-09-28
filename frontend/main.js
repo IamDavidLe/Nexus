@@ -1,6 +1,6 @@
 /* =========================================================
    Nexus — landing page motion
-   Cinematic hero world, feature scenes,
+   Hero payment network, feature scenes,
    scroll-scrubbed statement. No dependencies.
    ========================================================= */
 
@@ -75,445 +75,222 @@ $$(".glass-btn").forEach((b) => b.addEventListener("pointermove", (e) => {
 }));
 
 /* =========================================================
-   HERO WORLD
-   A dusk sky over a sea of clouds. Someone sits on a flower
-   hill with a glowing phone; payments arc through the sky
-   as comets to friends standing on distant cloud-islands.
+   HERO NETWORK
+   Friends float above a glowing horizon. Payments streak
+   between them and "home", the Nexus hub rising on it.
    ========================================================= */
 const hero = $("[data-hero]");
 const heroContent = $("[data-hero-content]");
-const PAD = 40; // canvases overhang the hero so parallax never shows an edge
 
-const world = (() => {
-  const cv = {}, ctx = {};
-  $$("canvas[data-layer]", hero).forEach((c) => { cv[c.dataset.layer] = c; ctx[c.dataset.layer] = c.getContext("2d"); });
-  const layers = $$(".layer", hero);
-  const senderSvg = $("[data-sender]");
+(() => {
+  const cv = $("[data-hero-canvas]", hero);
+  const g = cv.getContext("2d");
+  const hubEl = $("[data-hub]", hero);
+  const nodeEls = $$("[data-node]", hero);
   const ping = $("[data-ping]");
   const pingAv = $("[data-ping-av]");
   const pingTitle = $("[data-ping-title]");
   const pingNote = $("[data-ping-note]");
 
   let W, H, dpr, narrow;
-  let stars = [], banks = [], tower = null, flowers = [], fgFlowers = [], motes = [], hillPts = [];
-  let sparks = [], rings = [], comets = [];
-  const friends = {
-    left: { nx: 0.15, ny: 0.585, glow: 0 },
-    right: { nx: 0.86, ny: 0.565, glow: 0 },
-  };
-  let senderBase = { x: 0, y: 0 };
+  let hub = { x: 0, y: 0, bx: 0, by: 0 }, nodes = {}, live = [], stars = [], motes = [];
+  let comets = [], sparks = [], rings = [];
+  const mouse = { x: 0, y: 0, sx: 0, sy: 0, px: -999, py: -999, inside: false };
 
-  /* ---- cloud bank painter (wraps horizontally) ---- */
-  function makeBank(w, h, { clusters, heightMax, shade, alpha = 1, flat = 0.75, towerAt = -1 }) {
-    const c = document.createElement("canvas");
-    c.width = w; c.height = h;
-    const x = c.getContext("2d");
-    const puff = (px, py, r, a) => {
-      for (const ox of [0, -w, w]) {
-        const cx = px + ox;
-        if (cx + r < 0 || cx - r > w) continue;
-        const g = x.createRadialGradient(cx, py - r * 0.15, 0, cx, py, r);
-        g.addColorStop(0, `rgba(255,255,255,${a})`);
-        g.addColorStop(0.62, `rgba(255,255,255,${a * 0.85})`);
-        g.addColorStop(0.86, `rgba(255,255,255,${a * 0.28})`);
-        g.addColorStop(1, "rgba(255,255,255,0)");
-        x.fillStyle = g;
-        x.beginPath(); x.arc(cx, py, r, 0, Math.PI * 2); x.fill();
-      }
-    };
-    const base = h * flat;
-    for (let k = 0; k < clusters; k++) {
-      const cx = (k + Math.random() * 0.8) * (w / clusters);
-      const cw = rand(0.4, 0.85) * (w / clusters);
-      const ch = rand(0.45, 1) * heightMax;
-      const n = Math.round(rand(26, 44));
-      for (let i = 0; i < n; i++) {
-        const dx = gauss() * cw * 0.6;
-        const fall = 1 - Math.min(1, Math.abs(dx) / cw);
-        const r = rand(0.18, 0.36) * ch * (0.45 + fall);
-        puff(cx + dx, base - Math.abs(gauss()) * ch * fall * 0.7 - r * 0.2, r, rand(0.35, 0.7));
-      }
-    }
-    if (towerAt >= 0) {
-      // a broad billowing cumulus: wide shoulders, rounded crown
-      for (let i = 0; i < 150; i++) {
-        const t = Math.pow(Math.random(), 0.8);
-        const spread = w * 0.26 * (1.1 - t * 0.55);
-        const r = rand(0.09, 0.16) * h * (1.2 - t * 0.5);
-        const py = Math.max(r * 1.02, base - t * h * 0.6 + gauss() * 8);
-        puff(towerAt * w + gauss() * spread, py, r, rand(0.45, 0.85));
-      }
-    }
-    x.globalCompositeOperation = "source-atop";
-    const grd = x.createLinearGradient(0, 0, 0, h);
-    shade.forEach(([s, col]) => grd.addColorStop(s, col));
-    x.fillStyle = grd; x.fillRect(0, 0, w, h);
-    x.globalCompositeOperation = "destination-in";
-    const fade = x.createLinearGradient(0, 0, 0, h);
-    fade.addColorStop(0, "#000"); fade.addColorStop(0.7, "#000"); fade.addColorStop(1, "rgba(0,0,0,0)");
-    x.fillStyle = fade; x.fillRect(0, 0, w, h);
-    return { canvas: c, w, h, alpha };
-  }
-
-  /* ---- the hill the sender sits on (Catmull-Rom through hillPts) ---- */
-  function hillY(x) {
-    const p = hillPts;
-    let i = 0;
-    while (i < p.length - 2 && x > p[i + 1][0]) i++;
-    const p0 = p[Math.max(0, i - 1)], p1 = p[i], p2 = p[i + 1], p3 = p[Math.min(p.length - 1, i + 2)];
-    const t = clamp((x - p1[0]) / (p2[0] - p1[0] || 1), 0, 1);
-    const t2 = t * t, t3 = t2 * t;
-    return 0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
-  }
-
-  // colour of the hill gradient (#3b3776 → #221f4c → #07060f over .68H..H) at height y
-  function hillColorAt(y) {
-    const stops = [[0, [38, 74, 154]], [0.35, [21, 41, 94]], [1, [4, 10, 26]]];
-    const t = clamp((y - H * 0.68) / (H * 0.32), 0, 1);
-    let i = 0;
-    while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
-    const [t0, c0] = stops[i], [t1, c1] = stops[i + 1];
-    const k = (t - t0) / (t1 - t0);
-    return c0.map((v, j) => Math.round(v + (c1[j] - v) * k));
-  }
-
-  const PETALS = ["255,255,255", "226,238,255", "191,219,254", "147,197,253", "96,165,250", "59,130,246"];
+  const spawnMote = (anywhere) => ({
+    x: hub.bx + gauss() * W * 0.34, y: anywhere ? rand(H * 0.45, hub.by) : hub.by - rand(0, 12),
+    vy: rand(8, 26), sway: rand(6, 22), p: Math.random() * 6.28, r: rand(0.6, 1.8), life: 0, max: rand(4, 9),
+  });
 
   function build() {
-    dpr = Math.min(devicePixelRatio || 1, 1.5);
+    dpr = Math.min(devicePixelRatio || 1, 2);
     const r = hero.getBoundingClientRect();
     W = Math.round(r.width); H = Math.round(r.height);
     narrow = W < 700;
-    for (const k in cv) {
-      cv[k].width = (W + PAD * 2) * dpr; cv[k].height = (H + PAD * 2) * dpr;
-      ctx[k].setTransform(dpr, 0, 0, dpr, PAD * dpr, PAD * dpr); // draw in hero coordinates
+    cv.width = W * dpr; cv.height = H * dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // resting centres come straight from the CSS left/top (the elements are centred on them)
+    const at = (el) => { const cs = getComputedStyle(el); return { bx: parseFloat(cs.left), by: parseFloat(cs.top) }; };
+    Object.assign(hub, at(hubEl));
+    nodes = {};
+    for (const el of nodeEls) {
+      if (!el.offsetParent) continue; // hidden at this width
+      nodes[el.dataset.node] = { el, ...at(el), x: 0, y: 0, d: +el.dataset.depth || 0.5, c: el.style.getPropertyValue("--c"), heat: 0 };
     }
-    friends.left.nx = narrow ? 0.12 : 0.15;
-    friends.right.nx = narrow ? 0.88 : 0.86;
-
-    // where the sender's robe meets the ground (hero coords, parallax at rest)
-    const wrap = senderSvg.parentElement;
-    const tf = wrap.style.transform;
-    wrap.style.transform = "none";
-    const sr = senderSvg.getBoundingClientRect();
-    wrap.style.transform = tf;
-    senderBase = { x: sr.left - r.left + sr.width * 0.52, y: sr.top - r.top + sr.height * (352 / 360) };
-
-    const by = senderBase.y + 3, bx = senderBase.x;
-    hillPts = [
-      [-PAD - 10, H * 0.70], [W * 0.14, H * 0.735], [bx - W * 0.2, by - H * 0.005],
-      [bx - W * 0.06, by - 2], [bx + W * 0.08, by + 2], [bx + W * 0.26, by + H * 0.04], [W + PAD + 10, by + H * 0.085],
-    ];
-
+    live = Object.keys(nodes);
     stars = Array.from({ length: narrow ? 70 : 150 }, () => ({
-      x: Math.random() * W, y: Math.pow(Math.random(), 1.7) * H * 0.45,
-      r: rand(0.3, 1.25), p: Math.random() * 6.28, s: rand(0.5, 2.1),
+      x: Math.random() * W, y: Math.pow(Math.random(), 1.4) * H * 0.8,
+      r: rand(0.3, 1.2), p: Math.random() * 6.28, s: rand(0.4, 1.8), d: rand(0.05, 0.3),
     }));
+    motes = Array.from({ length: narrow ? 18 : 36 }, () => spawnMote(true));
+    place();
+  }
 
-    tower = makeBank(Math.round(W * (narrow ? 0.9 : 0.62)), Math.round(H * 0.6), {
-      clusters: 3, heightMax: H * 0.16, towerAt: 0.42, flat: 0.8,
-      shade: [[0, "rgba(255,255,255,.99)"], [0.35, "rgba(240,246,255,.97)"], [0.7, "rgba(196,218,250,.95)"], [1, "rgba(132,164,230,.9)"]],
-    });
-    banks = [
-      { y: 0.575, speed: 3, bank: makeBank(Math.round(W * 1.5), Math.round(H * 0.22), { clusters: narrow ? 5 : 9, heightMax: H * 0.11, alpha: 0.85,
-        shade: [[0, "rgba(255,255,255,.96)"], [0.6, "rgba(228,240,255,.92)"], [1, "rgba(186,210,248,.85)"]] }) },
-      { y: 0.64, speed: 6, bank: makeBank(Math.round(W * 1.7), Math.round(H * 0.26), { clusters: narrow ? 5 : 10, heightMax: H * 0.13,
-        shade: [[0, "rgba(255,255,255,.98)"], [0.45, "rgba(214,230,255,.96)"], [1, "rgba(124,160,228,.95)"]] }) },
-      { y: 0.71, speed: 10, bank: makeBank(Math.round(W * 1.9), Math.round(H * 0.26), { clusters: narrow ? 5 : 11, heightMax: H * 0.12,
-        shade: [[0, "rgba(236,244,255,1)"], [0.4, "rgba(172,200,244,1)"], [1, "rgba(80,116,200,1)"]] }) },
-    ];
-
-    // meadow flowers, denser and larger toward the viewer
-    const n = Math.round(clamp((W * H) / 1300, 380, 1300));
-    flowers = [];
-    for (let i = 0; i < n; i++) {
-      const x = rand(-PAD, W + PAD);
-      const top = hillY(x);
-      const d = Math.pow(Math.random(), 1.35); // 0 = crest, 1 = foreground
-      const y = top + 4 + d * (H + PAD - top);
-      flowers.push({ x, y, d, r: 0.9 + d * 3.4 + Math.random() * 1.2, c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28, a: 0.45 + d * 0.5 });
+  /* ---- parallax: move each friend by its depth, keep the canvas in sync ---- */
+  function place() {
+    for (const k of live) {
+      const n = nodes[k];
+      const ox = -mouse.sx * n.d * 36, oy = -mouse.sy * n.d * 22;
+      n.x = n.bx + ox; n.y = n.by + oy;
+      n.el.style.transform = `translate3d(${ox.toFixed(2)}px, ${oy.toFixed(2)}px, 0)`;
     }
-    flowers.sort((a, b) => a.y - b.y);
-    // big out-of-focus blossoms right in front of the lens
-    fgFlowers = Array.from({ length: narrow ? 14 : 26 }, () => ({
-      x: rand(-PAD, W + PAD), y: rand(H * 0.9, H + PAD), r: rand(5, 11), c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28,
-    }));
-    // small flowers tucked around the sender so the robe sits *in* the meadow
-    for (let i = 0; i < 40; i++) {
-      const x = senderBase.x + gauss() * 150;
-      fgFlowers.push({ x, y: hillY(x) + rand(2, 22), r: rand(1.4, 3), c: PETALS[(Math.random() * PETALS.length) | 0], p: Math.random() * 6.28, small: true });
-    }
-    // grass blades in front of the sender so the robe settles into the meadow
-    grass = Array.from({ length: narrow ? 160 : 320 }, () => {
-      const x = senderBase.x + gauss() * (narrow ? 120 : 210);
-      return { x, y: hillY(x) + rand(2, 14), len: rand(7, 20), lean: rand(-0.45, 0.45), p: Math.random() * 6.28 };
-    });
-    motes = Array.from({ length: narrow ? 22 : 44 }, () => spawnMote(true));
-    // individual puffs in the cloud sea that react to the cursor and to clicks
-    puffs = Array.from({ length: narrow ? 14 : 30 }, () => {
-      const x = rand(-PAD, W + PAD), y = H * rand(0.56, 0.72);
-      return { hx: x, hy: y, x, y, vx: 0, vy: 0, r: rand(26, 64) * (narrow ? 0.75 : 1), glow: 0, p: Math.random() * 6.28, sp: rand(4, 10) };
-    });
+    hub.x = hub.bx; hub.y = hub.by;
   }
 
-  function drawPuffs(g, t) {
-    const dt = frameDt, span = W + PAD * 2, damp = Math.pow(0.9, dt * 60);
-    for (const p of puffs) {
-      p.hx += p.sp * dt;
-      if (p.hx - p.r > W + PAD) { p.hx -= span + p.r * 2; p.x -= span + p.r * 2; }
-      if (mouse.inside) {
-        const dx = p.x - mouse.px, dy = p.y - mouse.py, d = Math.hypot(dx, dy) || 1, R = 190 + p.r;
-        if (d < R) { const f = 1 - d / R; p.vx += (dx / d) * f * 1100 * dt; p.vy += (dy / d) * f * 700 * dt; p.glow = Math.max(p.glow, f); }
-      }
-      p.vx += (p.hx - p.x) * 5 * dt; p.vy += (p.hy + Math.sin(t * 0.6 + p.p) * 6 - p.y) * 5 * dt;
-      p.vx *= damp; p.vy *= damp;
-      p.x += p.vx * dt; p.y += p.vy * dt;
-      p.glow *= Math.pow(0.94, dt * 60);
-      const gr = g.createRadialGradient(p.x, p.y - p.r * 0.2, 0, p.x, p.y, p.r);
-      gr.addColorStop(0, "rgba(255,255,255,.95)"); gr.addColorStop(0.55, "rgba(236,244,255,.85)"); gr.addColorStop(0.82, "rgba(186,210,250,.35)"); gr.addColorStop(1, "rgba(186,210,250,0)");
-      g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y, p.r, 0, Math.PI * 2); g.fill();
-      if (p.glow > 0.02) {
-        g.globalCompositeOperation = "lighter";
-        const hg = g.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 1.5);
-        hg.addColorStop(0, `rgba(191,219,254,${p.glow * 0.45})`); hg.addColorStop(1, "rgba(191,219,254,0)");
-        g.fillStyle = hg; g.beginPath(); g.arc(p.x, p.y, p.r * 1.5, 0, Math.PI * 2); g.fill();
-        g.globalCompositeOperation = "source-over";
-      }
-    }
-  }
-  let grass = [], puffs = [], frameDt = 0;
+  // every friend is wired to home along a curve that hugs the edges and glides in over the horizon
+  const ctrl = (n) => ({ x: n.x + (hub.x - n.x) * 0.1, y: hub.y - (hub.y - n.y) * 0.08 });
+  const bez = (a, c, b, t) => ({ x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y });
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
-  function spawnMote(anywhere) {
-    return { x: rand(0, W), y: anywhere ? rand(H * 0.5, H) : H + 10, vy: rand(8, 22), sway: rand(10, 30), p: Math.random() * 6.28, r: rand(0.8, 2.2), life: 0, max: rand(5, 10) };
-  }
-
-  /* ---- positions (hero coords) ---- */
-  const friendPos = (f) => ({ x: f.nx * W, y: f.ny * H });
-  function svgPoint(vx, vy) {
-    const hr = hero.getBoundingClientRect(), sr = senderSvg.getBoundingClientRect();
-    return { x: sr.left - hr.left + sr.width * (vx / 300), y: sr.top - hr.top + sr.height * (vy / 360) };
-  }
-  const senderPhone = () => svgPoint(228, 196);
-  const senderHead = () => svgPoint(152, 60);
-
-  /* ---- drawing ---- */
-  function drawFriend(g, f, t) {
-    const { x, y } = friendPos(f);
-    const s = H * (narrow ? 0.06 : 0.075);
-    // cloud-island under their feet
-    const isl = g.createRadialGradient(x, y + s * 0.1, 0, x, y + s * 0.1, s * 1.6);
-    isl.addColorStop(0, "rgba(255,255,255,.95)"); isl.addColorStop(0.5, "rgba(206,224,255,.6)"); isl.addColorStop(1, "rgba(206,224,255,0)");
-    g.fillStyle = isl;
-    g.beginPath(); g.ellipse(x, y + s * 0.12, s * 1.7, s * 0.42, 0, 0, Math.PI * 2); g.fill();
-    // silhouette: robe + head
-    g.fillStyle = "rgba(24,50,128,.92)";
-    g.beginPath();
-    g.moveTo(x - s * 0.1, y - s * 0.78);
-    g.quadraticCurveTo(x - s * 0.24, y - s * 0.4, x - s * 0.26, y);
-    g.lineTo(x + s * 0.26, y);
-    g.quadraticCurveTo(x + s * 0.22, y - s * 0.4, x + s * 0.1, y - s * 0.78);
-    g.closePath(); g.fill();
-    g.beginPath(); g.arc(x, y - s * 0.9, s * 0.13, 0, Math.PI * 2); g.fill();
-    // phone glow
-    const glow = clamp(0.35 + 0.15 * Math.sin(t * 2 + f.nx * 9) + f.glow, 0, 1);
-    const R = s * (0.5 + f.glow * 1.4);
-    const gl = g.createRadialGradient(x + s * 0.12, y - s * 0.62, 0, x + s * 0.12, y - s * 0.62, R);
-    gl.addColorStop(0, `rgba(240,250,255,${glow})`); gl.addColorStop(1, "rgba(160,200,255,0)");
-    g.globalCompositeOperation = "lighter";
-    g.fillStyle = gl;
-    g.beginPath(); g.arc(x + s * 0.12, y - s * 0.62, R, 0, Math.PI * 2); g.fill();
-    g.globalCompositeOperation = "source-over";
-    f.glow *= 0.965;
-  }
-
-  function drawBack(t) {
-    const g = ctx.back;
-    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
+  function drawSky(t) {
     for (const s of stars) {
-      const a = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
-      g.fillStyle = `rgba(255,255,255,${a * 0.85})`;
-      g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI * 2); g.fill();
-    }
-    // the big cumulus on the left, breathing slowly
-    g.drawImage(tower.canvas, -W * 0.06 + Math.sin(t * 0.05) * 18, H * 0.18 + Math.sin(t * 0.07) * 6, tower.w, tower.h);
-    banks.forEach((L, i) => {
-      const { canvas, w, h, alpha } = L.bank;
-      let x = -((t * L.speed) % w) - PAD;
-      g.globalAlpha = alpha;
-      while (x < W + PAD) { g.drawImage(canvas, x, H * L.y - h * 0.62, w, h); x += w; }
-      g.globalAlpha = 1;
-      if (i === 1) { drawPuffs(g, t); drawFriend(g, friends.left, t); drawFriend(g, friends.right, t); }
-    });
-  }
-
-  function drawMeadow(t) {
-    const g = ctx.meadow;
-    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
-    g.beginPath();
-    g.moveTo(-PAD, H + PAD);
-    for (let x = -PAD; x <= W + PAD; x += 8) g.lineTo(x, hillY(x));
-    g.lineTo(W + PAD, H + PAD); g.closePath();
-    const grd = g.createLinearGradient(0, H * 0.68, 0, H);
-    grd.addColorStop(0, "#264a9a"); grd.addColorStop(0.35, "#15295e"); grd.addColorStop(1, "#040a1a");
-    g.fillStyle = grd; g.fill();
-    // rim light along the crest
-    g.save();
-    g.beginPath();
-    for (let x = -PAD; x <= W + PAD; x += 8) { if (x === -PAD) g.moveTo(x, hillY(x) + 1); else g.lineTo(x, hillY(x) + 1); }
-    g.strokeStyle = "rgba(214,232,255,.55)"; g.lineWidth = 2; g.shadowColor = "rgba(170,205,255,.85)"; g.shadowBlur = 12; g.stroke();
-    g.restore();
-    for (const f of flowers) {
-      const fx = f.x + Math.sin(t * 1.1 + f.x * 0.012 + f.p) * (0.6 + f.d * 3.2), fy = f.y;
-      if (f.d > 0.25) {
-        g.strokeStyle = `rgba(8,20,58,${0.5 * f.a})`; g.lineWidth = 0.6 + f.d;
-        g.beginPath(); g.moveTo(f.x, fy + f.r * 3); g.lineTo(fx, fy); g.stroke();
-      }
-      g.fillStyle = `rgba(${f.c},${0.16 * f.a})`;
-      g.beginPath(); g.arc(fx, fy, f.r * 2.3, 0, Math.PI * 2); g.fill();
-      g.fillStyle = `rgba(${f.c},${f.a})`;
-      g.beginPath(); g.arc(fx, fy, f.r, 0, Math.PI * 2); g.fill();
+      const a = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(t * s.s + s.p));
+      g.fillStyle = `rgba(226,236,255,${a * 0.7})`;
+      g.beginPath(); g.arc(s.x - mouse.sx * s.d * 30, s.y - mouse.sy * s.d * 18, s.r, 0, Math.PI * 2); g.fill();
     }
   }
 
-  function drawFront(t, dt) {
-    const g = ctx.front;
-    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
-    // a soft strip of meadow over the robe's hem
-    const half = narrow ? 150 : 250;
-    g.beginPath();
-    for (let x = senderBase.x - half; x <= senderBase.x + half; x += 6) {
-      const y = hillY(x) - 3 * Math.sin(Math.PI * (x - senderBase.x + half) / (half * 2));
-      if (x === senderBase.x - half) g.moveTo(x, y); else g.lineTo(x, y);
+  function drawLinks(t) {
+    g.lineWidth = 1;
+    g.setLineDash([2, 7]);
+    g.lineDashOffset = -t * 16;
+    for (const k of live) {
+      const n = nodes[k], c = ctrl(n);
+      n.heat *= Math.pow(0.97, frameDt * 60);
+      const grd = g.createLinearGradient(n.x, n.y, hub.x, hub.y);
+      grd.addColorStop(0, `rgba(191,219,254,${0.16 + n.heat * 0.5})`);
+      grd.addColorStop(1, `rgba(147,197,253,${0.05 + n.heat * 0.3})`);
+      g.strokeStyle = grd;
+      g.beginPath(); g.moveTo(n.x, n.y); g.quadraticCurveTo(c.x, c.y, hub.x, hub.y); g.stroke();
     }
-    g.lineTo(senderBase.x + half, H + PAD); g.lineTo(senderBase.x - half, H + PAD); g.closePath();
-    // same colour as the hill at that height, fading out so no seam shows under parallax
-    const [cr, cg, cb] = hillColorAt(senderBase.y);
-    const hem = g.createLinearGradient(0, senderBase.y - 6, 0, senderBase.y + 44);
-    hem.addColorStop(0, `rgba(${cr},${cg},${cb},1)`); hem.addColorStop(0.45, `rgba(${cr},${cg},${cb},.9)`); hem.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
-    g.fillStyle = hem; g.fill();
-    g.strokeStyle = `rgb(${cr},${cg},${cb})`; g.lineWidth = 1.5; g.lineCap = "round";
-    for (const b of grass) {
-      const sway = Math.sin(t * 1.3 + b.p) * 2.2;
-      g.beginPath(); g.moveTo(b.x, b.y);
-      g.quadraticCurveTo(b.x + b.lean * b.len * 0.4, b.y - b.len * 0.6, b.x + b.lean * b.len + sway, b.y - b.len);
-      g.stroke();
-    }
-    for (const f of fgFlowers) {
-      const fx = f.x + Math.sin(t * 0.9 + f.p) * (f.small ? 1.2 : 5), fy = f.y;
-      if (f.small) {
-        g.fillStyle = `rgba(${f.c},.22)`; g.beginPath(); g.arc(fx, fy, f.r * 2.3, 0, Math.PI * 2); g.fill();
-        g.fillStyle = `rgba(${f.c},.9)`; g.beginPath(); g.arc(fx, fy, f.r, 0, Math.PI * 2); g.fill();
-      } else {
-        const gr = g.createRadialGradient(fx, fy, 0, fx, fy, f.r * 2.6);
-        gr.addColorStop(0, `rgba(${f.c},.75)`); gr.addColorStop(0.45, `rgba(${f.c},.35)`); gr.addColorStop(1, `rgba(${f.c},0)`);
-        g.fillStyle = gr; g.beginPath(); g.arc(fx, fy, f.r * 2.6, 0, Math.PI * 2); g.fill();
-      }
-    }
-    // fireflies drifting up from the meadow
-    g.globalCompositeOperation = "lighter";
+    g.setLineDash([]);
+  }
+
+  function drawMotes(dt) {
     for (let i = 0; i < motes.length; i++) {
       const m = motes[i];
       m.life += dt; m.y -= m.vy * dt;
-      const x = m.x + Math.sin(t * 0.8 + m.p) * m.sway;
-      const a = Math.sin(Math.PI * clamp(m.life / m.max, 0, 1)) * (0.55 + 0.45 * Math.sin(t * 3 + m.p));
-      if (m.life > m.max || m.y < H * 0.35) motes[i] = spawnMote(false);
-      const gr = g.createRadialGradient(x, m.y, 0, x, m.y, m.r * 5);
-      gr.addColorStop(0, `rgba(230,242,255,${Math.max(0, a)})`); gr.addColorStop(1, "rgba(150,190,255,0)");
-      g.fillStyle = gr; g.beginPath(); g.arc(x, m.y, m.r * 5, 0, Math.PI * 2); g.fill();
+      const x = m.x + Math.sin(m.life * 0.8 + m.p) * m.sway;
+      const a = Math.sin(Math.PI * clamp(m.life / m.max, 0, 1)) * 0.8;
+      if (m.life > m.max) motes[i] = spawnMote(false);
+      g.fillStyle = `rgba(191,219,254,${Math.max(0, a)})`;
+      g.beginPath(); g.arc(x, m.y, m.r, 0, Math.PI * 2); g.fill();
     }
-    g.globalCompositeOperation = "source-over";
   }
 
-  /* ---- payments as comets ---- */
+  /* ---- payments ---- */
   const SCRIPT = [
-    { from: "me", to: "left", av: "M", c: "#bfdbfe", title: "Maya received $40.00", note: "🌸 For the flowers" },
-    { from: "right", to: "me", av: "L", c: "#93c5fd", title: "You received $18.40", note: "🍣 Leo · Sushi Friday" },
-    { from: "me", to: "right", av: "L", c: "#93c5fd", title: "Leo received $12.00", note: "🚕 Half the cab home" },
-    { from: "left", to: "me", av: "M", c: "#bfdbfe", title: "You received $25.00", note: "🎂 Maya · Mia's gift fund" },
+    { who: "maya", out: true, av: "M", title: "Maya received $40.00", note: "🌸 For the flowers" },
+    { who: "leo", out: false, av: "L", title: "Leo paid you $18.40", note: "🍣 Sushi Friday" },
+    { who: "priya", out: true, av: "P", title: "Priya received $12.00", note: "🚕 Half the cab home" },
+    { who: "jordan", out: false, av: "J", title: "Jordan paid you $15.00", note: "🎬 Dune: Part Three" },
+    { who: "sam", out: true, av: "S", title: "Sam received $31.25", note: "🏠 Utilities · Oct" },
+    { who: "noah", out: false, av: "N", title: "Noah paid you $22.00", note: "🎂 Mia's gift fund" },
   ];
   let scriptIdx = 0;
-  const posOf = (who) => (who === "me" ? senderPhone() : friendPos(friends[who]));
 
-  function pulseSender() {
-    senderSvg.classList.remove("is-sending"); void senderSvg.getBoundingClientRect();
-    senderSvg.classList.add("is-sending");
-  }
+  function hit(el) { el.classList.remove("is-hit"); void el.offsetWidth; el.classList.add("is-hit"); }
+
   function launch() {
-    const step = SCRIPT[scriptIdx++ % SCRIPT.length];
-    const a = posOf(step.from), b = posOf(step.to);
-    const peak = Math.min(a.y, b.y) - H * (narrow ? 0.14 : 0.2);
-    comets.push({ step, a, b, c: { x: (a.x + b.x) / 2, y: peak }, t0: performance.now(), dur: 2300 });
-    if (step.from === "me") pulseSender(); else friends[step.from].glow = 0.9;
+    let step, tries = 0;
+    do { step = SCRIPT[scriptIdx++ % SCRIPT.length]; } while (!nodes[step.who] && ++tries < SCRIPT.length);
+    const n = nodes[step.who];
+    if (!n) return;
+    comets.push({ step, n, t0: performance.now(), dur: 1900, big: true });
+    n.heat = 1;
+    if (step.out) hit(hubEl); else hit(n.el);
   }
-  let pingTimer;
-  function arrive(cm) {
-    const { b, step } = cm;
-    for (let i = 0; i < 34; i++) {
-      const ang = Math.random() * Math.PI * 2, sp = rand(30, 140);
-      sparks.push({ x: b.x, y: b.y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 20, life: 0, max: rand(0.6, 1.4), r: rand(0.8, 2.4), hue: Math.random() });
+  // quieter traffic between neighbours on the same side, so the network always feels alive
+  function chatter() {
+    const left = live.filter((k) => nodes[k].bx < W / 2), right = live.filter((k) => nodes[k].bx >= W / 2);
+    const side = Math.random() < 0.5 ? left : right;
+    if (side.length < 2) return;
+    const i = (Math.random() * side.length) | 0;
+    let j = (Math.random() * (side.length - 1)) | 0; if (j >= i) j++;
+    comets.push({ from: nodes[side[i]], to: nodes[side[j]], t0: performance.now(), dur: 1500 });
+  }
+
+  function cometPath(cm) {
+    if (cm.n) { // along the node ↔ hub link
+      const c = ctrl(cm.n);
+      return cm.step.out ? [hub, c, cm.n] : [cm.n, c, hub];
     }
-    rings.push({ x: b.x, y: b.y, t: 0 });
-    if (!step) return; // a spark the visitor sent into the sky
-    if (step.to === "me") pulseSender(); else friends[step.to].glow = 1.2;
-    // glass notification above whoever received it
-    // beside the sender (clear of the hero button), or above the friend
-    const head = senderHead();
-    const at = step.to === "me"
-      ? { x: head.x + (narrow ? W * 0.18 : Math.max(200, W * 0.15)), y: head.y + H * 0.08 }
-      : { x: b.x, y: b.y - H * (narrow ? 0.07 : 0.09) };
-    ping.style.left = clamp(at.x, 130, W - 130) + "px";
-    ping.style.top = at.y + "px";
-    pingAv.textContent = step.av; pingAv.style.setProperty("--c", step.c);
+    const a = cm.from || hub, b = cm.to;
+    const mid = { x: (a.x + b.x) / 2, y: Math.min(a.y, b.y) - Math.abs(a.y - b.y) * 0.3 - 40 };
+    return [a, mid, b];
+  }
+
+  let pingTimer;
+  function arrive(cm, b) {
+    const n = cm.big ? 30 : 12;
+    for (let i = 0; i < n; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = rand(20, cm.big ? 130 : 60);
+      sparks.push({ x: b.x, y: b.y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 20, life: 0, max: rand(0.5, 1.2), r: rand(0.7, 2.2), hue: Math.random() });
+    }
+    rings.push({ x: b.x, y: b.y, t: 0, big: !!cm.big });
+    if (cm.to && cm.to.el) hit(cm.to.el);
+    if (!cm.step) return;
+    const { step, n: node } = cm;
+    let x, y;
+    if (step.out) { hit(node.el); x = node.x; y = node.y - 40 * (+getComputedStyle(node.el).getPropertyValue("--s") || 1) - 4; }
+    else { hit(hubEl); x = hub.x; y = hub.y - (narrow ? 58 : 64); }
+    ping.style.left = clamp(x, narrow ? 120 : 150, W - (narrow ? 120 : 150)) + "px";
+    ping.style.top = y + "px";
+    pingAv.textContent = step.av; pingAv.style.setProperty("--c", node.c);
     pingTitle.textContent = step.title; pingNote.textContent = step.note;
     ping.classList.remove("is-on"); void ping.offsetWidth; ping.classList.add("is-on");
     clearTimeout(pingTimer);
-    pingTimer = setTimeout(() => ping.classList.remove("is-on"), 2600);
+    pingTimer = setTimeout(() => ping.classList.remove("is-on"), 2300);
   }
-  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-  const bez = (a, c, b, t) => ({ x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y });
 
-  function drawFx(now, dt) {
-    const g = ctx.fx;
-    g.clearRect(-PAD, -PAD, W + PAD * 2, H + PAD * 2);
+  function drawComets(now, dt) {
     g.globalCompositeOperation = "lighter";
     if (mouse.inside && !narrow) {
-      const cg = g.createRadialGradient(mouse.px, mouse.py, 0, mouse.px, mouse.py, 150);
-      cg.addColorStop(0, "rgba(219,234,254,.14)"); cg.addColorStop(1, "rgba(219,234,254,0)");
-      g.fillStyle = cg; g.beginPath(); g.arc(mouse.px, mouse.py, 150, 0, Math.PI * 2); g.fill();
+      const cg = g.createRadialGradient(mouse.px, mouse.py, 0, mouse.px, mouse.py, 180);
+      cg.addColorStop(0, "rgba(96,165,250,.12)"); cg.addColorStop(1, "rgba(96,165,250,0)");
+      g.fillStyle = cg; g.beginPath(); g.arc(mouse.px, mouse.py, 180, 0, Math.PI * 2); g.fill();
     }
+    g.lineCap = "round";
     comets = comets.filter((cm) => {
-      const p = clamp((now - cm.t0) / cm.dur, 0, 1);
-      const h = bez(cm.a, cm.c, cm.b, ease(p));
-      g.strokeStyle = `rgba(219,234,254,${0.25 * Math.sin(Math.PI * p)})`;
-      g.lineWidth = 1; g.setLineDash([2, 6]);
-      g.beginPath(); g.moveTo(cm.a.x, cm.a.y); g.quadraticCurveTo(cm.c.x, cm.c.y, cm.b.x, cm.b.y); g.stroke();
-      g.setLineDash([]);
-      for (let k = 0; k < 3; k++) sparks.push({ x: h.x + gauss() * 3, y: h.y + gauss() * 3, vx: gauss() * 12, vy: gauss() * 12 + 6, life: 0, max: rand(0.5, 1.1), r: rand(0.6, 1.8), hue: Math.random() });
-      const gr = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, 26);
-      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.18, "rgba(219,234,254,.95)"); gr.addColorStop(0.5, "rgba(96,165,250,.4)"); gr.addColorStop(1, "rgba(59,130,246,0)");
-      g.fillStyle = gr; g.beginPath(); g.arc(h.x, h.y, 26, 0, Math.PI * 2); g.fill();
-      if (p >= 1) { arrive(cm); return false; }
+      const [a, c, b] = cometPath(cm);
+      const raw = clamp((now - cm.t0) / cm.dur, 0, 1), p = ease(raw);
+      const big = !!cm.big, fade = Math.min(1, raw * 6);
+      // tapered, fading trail
+      const SEG = 22, len = big ? 0.3 : 0.22;
+      let prev = bez(a, c, b, p);
+      for (let k = 1; k <= SEG; k++) {
+        const q = Math.max(0, p - (k / SEG) * len), pt = bez(a, c, b, q), f = 1 - k / SEG;
+        g.strokeStyle = `rgba(${f > 0.6 ? "226,238,255" : "96,165,250"},${f * (big ? 0.85 : 0.45) * fade})`;
+        g.lineWidth = f * (big ? 3.6 : 2) + 0.3;
+        g.beginPath(); g.moveTo(prev.x, prev.y); g.lineTo(pt.x, pt.y); g.stroke();
+        prev = pt;
+      }
+      const h = bez(a, c, b, p), R = big ? 24 : 12;
+      const gr = g.createRadialGradient(h.x, h.y, 0, h.x, h.y, R);
+      gr.addColorStop(0, `rgba(255,255,255,${fade})`); gr.addColorStop(0.2, `rgba(219,234,254,${0.9 * fade})`); gr.addColorStop(0.55, "rgba(96,165,250,.35)"); gr.addColorStop(1, "rgba(59,130,246,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(h.x, h.y, R, 0, Math.PI * 2); g.fill();
+      if (big && Math.random() < 0.7) sparks.push({ x: h.x + gauss() * 3, y: h.y + gauss() * 3, vx: gauss() * 10, vy: gauss() * 10 + 8, life: 0, max: rand(0.4, 0.9), r: rand(0.5, 1.5), hue: Math.random() });
+      if (raw >= 1) { arrive(cm, b); return false; }
       return true;
     });
     sparks = sparks.filter((s) => {
       s.life += dt; if (s.life > s.max) return false;
-      s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.96; s.vy = s.vy * 0.96 + 14 * dt;
+      s.x += s.vx * dt; s.y += s.vy * dt; s.vx *= 0.95; s.vy = s.vy * 0.95 + 16 * dt;
       const a = 1 - s.life / s.max;
       g.fillStyle = s.hue < 0.5 ? `rgba(255,255,255,${a})` : s.hue < 0.8 ? `rgba(147,197,253,${a})` : `rgba(96,165,250,${a})`;
       g.beginPath(); g.arc(s.x, s.y, s.r * (0.5 + a * 0.5), 0, Math.PI * 2); g.fill();
       return true;
     });
     rings = rings.filter((r) => {
-      r.t += dt; if (r.t > 1) return false;
-      g.strokeStyle = `rgba(219,234,254,${(1 - r.t) * 0.85})`; g.lineWidth = 1.5;
-      g.beginPath(); g.arc(r.x, r.y, 8 + r.t * 46, 0, Math.PI * 2); g.stroke();
+      r.t += dt * (r.big ? 0.9 : 1.3); if (r.t > 1) return false;
+      g.strokeStyle = `rgba(191,219,254,${(1 - r.t) * 0.8})`; g.lineWidth = 1.2;
+      g.beginPath(); g.arc(r.x, r.y, 6 + ease(r.t) * (r.big ? 54 : 30), 0, Math.PI * 2); g.stroke();
       return true;
     });
     g.globalCompositeOperation = "source-over";
   }
 
-  /* ---- parallax (mouse + scroll) ---- */
-  const mouse = { x: 0, y: 0, sx: 0, sy: 0, px: -999, py: -999, inside: false };
+  /* ---- input ---- */
   hero.addEventListener("pointermove", (e) => {
     const r = hero.getBoundingClientRect();
     mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
@@ -521,50 +298,41 @@ const world = (() => {
     mouse.px = e.clientX - r.left; mouse.py = e.clientY - r.top; mouse.inside = true;
   });
   hero.addEventListener("pointerleave", () => { mouse.x = 0; mouse.y = 0; mouse.inside = false; });
+  // click the sky to send a spark from home
   hero.addEventListener("click", (e) => {
-    if (e.target.closest("a, button")) return;
+    if (reduced || e.target.closest("a, button") || comets.length > 8) return;
     const r = hero.getBoundingClientRect();
-    const x = e.clientX - r.left, y = e.clientY - r.top;
-    for (const p of puffs) {
-      const dx = p.x - x, dy = p.y - y, d = Math.hypot(dx, dy) || 1;
-      if (d < 340) { const f = 1 - d / 340; p.vx += (dx / d) * f * 900; p.vy += (dy / d) * f * 600; p.glow = Math.max(p.glow, f); }
-    }
-    rings.push({ x, y, t: 0 });
-    if (reduced || comets.length > 5) return;
-    const a = senderPhone();
-    comets.push({ step: null, a, b: { x, y }, c: { x: (a.x + x) / 2, y: Math.min(a.y, y) - H * 0.12 }, t0: performance.now(), dur: 1100 });
-    pulseSender();
+    comets.push({ to: { x: e.clientX - r.left, y: e.clientY - r.top }, t0: performance.now(), dur: 1000 });
+    hit(hubEl);
   });
-  function applyParallax() {
-    mouse.sx += (mouse.x - mouse.sx) * 0.05;
-    mouse.sy += (mouse.y - mouse.sy) * 0.05;
-    const sy = Math.min(scrollY, H);
-    for (const el of layers) {
-      const d = +el.dataset.depth || 0;
-      el.style.transform = `translate3d(${(-mouse.sx * d * 520).toFixed(2)}px, ${(-mouse.sy * d * 260 + sy * (0.45 - d * 5)).toFixed(2)}px, 0)`;
-    }
-  }
 
   /* ---- loop ---- */
-  let running = true, raf, last = performance.now(), nextLaunch = performance.now() + 2200;
+  let running = true, raf, last = performance.now(), frameDt = 0;
+  let nextLaunch = performance.now() + 2000, nextChatter = performance.now() + 2600;
   const t0 = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     frameDt = reduced ? 0 : dt;
-    const t = (now - t0) / 1000;
-    if (!reduced) applyParallax();
-    drawBack(t);
-    drawMeadow(t);
-    drawFront(t, reduced ? 0 : dt);
-    drawFx(now, dt);
-    if (!reduced && now >= nextLaunch && !document.hidden) { launch(); nextLaunch = now + 3700; }
+    const t = reduced ? 0 : (now - t0) / 1000;
+    mouse.sx += (mouse.x - mouse.sx) * 0.06;
+    mouse.sy += (mouse.y - mouse.sy) * 0.06;
+    place();
+    g.clearRect(0, 0, W, H);
+    drawSky(t);
+    drawLinks(t);
+    drawMotes(frameDt);
+    drawComets(now, frameDt);
+    if (!reduced && !document.hidden) {
+      if (now >= nextLaunch) { launch(); nextLaunch = now + 2900; }
+      if (now >= nextChatter) { chatter(); nextChatter = now + rand(900, 1700); }
+    }
     if (running && !reduced) raf = requestAnimationFrame(frame);
   }
 
   build();
   frame(performance.now());
   let rt;
-  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { build(); if (reduced) frame(performance.now()); }, 180); });
+  addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { build(); if (reduced) frame(performance.now()); }, 150); });
   new IntersectionObserver(([e]) => {
     running = e.isIntersecting;
     cancelAnimationFrame(raf);
