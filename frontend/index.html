@@ -29,7 +29,7 @@
   </header>
   <div class="menu" data-menu aria-hidden="true">
     <a href="#features">Features</a><a href="#security">Security</a><a href="#feed">Community</a><a href="#everywhere">Web &amp; App</a>
-    <a href="./dashboard.html" class="glass-btn">Get Nexus</a>
+    <a href="./dashboard.html" class="btn-solid">Get Nexus</a>
   </div>
 
   <main id="main">
@@ -47,16 +47,16 @@
           <svg class="sender" viewBox="0 0 300 360" data-sender>
             <defs>
               <linearGradient id="robe" x1="0" y1="0" x2=".35" y2="1">
-                <stop offset="0" stop-color="#3d4595" /><stop offset=".5" stop-color="#272c6c" /><stop offset="1" stop-color="#121433" />
+                <stop offset="0" stop-color="#2f55b8" /><stop offset=".5" stop-color="#1d3a86" /><stop offset="1" stop-color="#0a1638" />
               </linearGradient>
               <linearGradient id="rim" x1="0" y1="0" x2="1" y2=".4">
-                <stop offset="0" stop-color="#ffd8de" stop-opacity=".95" /><stop offset=".45" stop-color="#ffc6d2" stop-opacity=".2" /><stop offset="1" stop-color="#bfd6ff" stop-opacity=".8" />
+                <stop offset="0" stop-color="#ffffff" stop-opacity=".95" /><stop offset=".45" stop-color="#cfe2ff" stop-opacity=".2" /><stop offset="1" stop-color="#bfd6ff" stop-opacity=".8" />
               </linearGradient>
               <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#2a2d63" /><stop offset="1" stop-color="#0e1030" />
+                <stop offset="0" stop-color="#1d3272" /><stop offset="1" stop-color="#081230" />
               </linearGradient>
               <radialGradient id="face" cx=".78" cy=".62" r=".9">
-                <stop offset="0" stop-color="#8fa6e6" /><stop offset=".45" stop-color="#3d4180" /><stop offset="1" stop-color="#23264f" />
+                <stop offset="0" stop-color="#a9cbff" /><stop offset=".45" stop-color="#2f53a8" /><stop offset="1" stop-color="#1a2f6c" />
               </radialGradient>
               <radialGradient id="screenGlow">
                 <stop offset="0" stop-color="#f2faff" stop-opacity="1" /><stop offset=".25" stop-color="#a9d6ff" stop-opacity=".55" /><stop offset="1" stop-color="#6aa8ff" stop-opacity="0" />
@@ -64,10 +64,10 @@
             </defs>
             <circle class="sender__glow" cx="228" cy="196" r="96" fill="url(#screenGlow)" />
             <path d="M136 118 C118 124 104 146 98 178 C90 220 86 262 70 300 C60 322 44 340 26 356 L286 356 C282 340 276 326 266 316 C262 292 262 262 254 244 C248 232 236 228 222 232 C206 236 196 232 188 220 C180 200 176 168 166 142 C160 128 150 120 136 118Z" fill="url(#robe)" stroke="url(#rim)" stroke-width="1.6" />
-            <path d="M142 108 L152 108 L154 126 L140 126Z" fill="#23264f" />
+            <path d="M142 108 L152 108 L154 126 L140 126Z" fill="#1a2f6c" />
             <circle class="sender__face" cx="152" cy="92" r="23" fill="url(#face)" />
             <path d="M126 98 C121 66 143 55 161 61 C178 67 182 86 176 99 C170 94 162 88 151 90 C144 103 140 116 133 121 C127 117 125 108 126 98Z" fill="url(#hair)" stroke="url(#rim)" stroke-width="1.2" />
-            <path d="M158 140 C170 170 180 202 196 214 C206 222 218 220 230 208 L226 198 C216 206 206 208 198 200 C186 182 178 160 170 138Z" fill="#323880" stroke="rgba(190,214,255,.35)" stroke-width="1" />
+            <path d="M158 140 C170 170 180 202 196 214 C206 222 218 220 230 208 L226 198 C216 206 206 208 198 200 C186 182 178 160 170 138Z" fill="#2a4fae" stroke="rgba(190,214,255,.35)" stroke-width="1" />
             <rect class="sender__phone" x="221" y="185" width="13" height="22" rx="3" transform="rotate(-32 228 196)" />
           </svg>
         </div>
@@ -82,24 +82,76 @@
       </div>
 
       <div class="hero__fade" aria-hidden="true"></div>
+      <p class="hero__hint" aria-hidden="true"><span></span>Move through the clouds · tap the sky to send a spark</p>
 
       <div class="hero__content" data-hero-content>
         <h1 class="hero__title rise">
-          <span class="hw">Where</span> <span class="hw">every</span> <span class="hw">dollar</span> <span class="hw">finds</span> <span class="hw">its</span> <span class="hw">way</span> <span class="hw">home.</span>
+          <span class="hw">Where</span> <span class="hw">every</span> <span class="hw">dollar</span> <span class="hw">finds</span> <span class="hw">its</span> <span class="hw">way</span> <span class="hw hw--key">home.<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 16 C 50 6, 110 4, 196 12" /></svg></span>
         </h1>
         <p class="hero__lead rise rise--d1">
           Nexus is how friends, families and roommates send, split and request money in seconds, on the web or in the app.
           It's simple, secure and feels a little like magic.
         </p>
-        <a href="#cta" class="glass-btn hero__btn fade-rise">Send money</a>
+        <div class="hero__ctas fade-rise">
+          <a href="./dashboard.html" class="btn-solid">Get Nexus</a>
+          <a href="#how" class="glass-btn hero__ghost">How it works <span aria-hidden="true">→</span></a>
+        </div>
       </div>
     </section>
 
-    <!-- ================= STATEMENT ================= -->
-    <section class="statement">
-      <p class="statement__text serif" data-scrub>
-        Pay your friends back before the check even hits the table.
-      </p>
+    <!-- ================= STATEMENT + LIVE PHONE ================= -->
+    <section class="statement" id="how">
+      <div class="statement__glow" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="statement__grid">
+        <div class="statement__copy">
+          <p class="eyebrow reveal">Live in your pocket</p>
+          <p class="statement__text serif" data-scrub>Pay your friends back before the check even <em>hits the table.</em></p>
+          <ul class="points reveal" style="--d:.1s">
+            <li><span>⚡</span>Instant transfers</li>
+            <li><span>🔒</span>Face ID on every payment</li>
+            <li><span>🌐</span>Web, iOS &amp; Android</li>
+          </ul>
+          <p class="tap-hint reveal" style="--d:.2s"><span class="tap-hint__dot"></span>Tap any payment on the phone to open it</p>
+        </div>
+
+        <div class="stage2 reveal" style="--d:.1s">
+          <div class="stage2__glow" aria-hidden="true"></div>
+          <div class="orbits" aria-hidden="true"><span></span><span></span><span></span></div>
+          <span class="coin2" style="--x:6%;--y:14%;--dl:0s" aria-hidden="true">$</span>
+          <span class="coin2" style="--x:84%;--y:10%;--dl:-1.4s" aria-hidden="true">⚡</span>
+          <span class="coin2" style="--x:2%;--y:72%;--dl:-2.6s" aria-hidden="true">🔒</span>
+          <span class="coin2" style="--x:88%;--y:78%;--dl:-.8s" aria-hidden="true">✓</span>
+
+          <div class="toast toast--a" data-toast aria-hidden="true">
+            <span class="av" style="--c:#bfdbfe">M</span>
+            <div><b>Maya paid you</b><small>🍣 Sushi Friday</small></div>
+            <em>+$18.40</em>
+          </div>
+          <div class="toast toast--b" data-toast aria-hidden="true">
+            <span class="av" style="--c:#93c5fd">4</span>
+            <div><b>Bill split 4 ways</b><small>🏠 Utilities · Oct</small></div>
+            <em>$31.25 ea</em>
+          </div>
+
+          <div class="phone phone--main">
+            <div class="phone__notch"></div>
+            <div class="phone__screen">
+              <div class="app__status"><span>9:41</span><span class="app__icons">▮▮▮ ◔</span></div>
+              <div class="app__head">
+                <div class="app__hello"><span class="av av--me">A</span><div><small>Good evening</small><b>Alex</b></div></div>
+                <span class="app__bell" aria-hidden="true"></span>
+              </div>
+              <div class="app__card">
+                <small>Nexus balance</small>
+                <b data-balance>$2,480.16</b>
+                <div class="app__actions" aria-hidden="true"><span>↑ Send</span><span>↓ Request</span><span>⌗ Scan</span></div>
+              </div>
+              <div class="app__list-head"><b>Activity</b><small>Tap to open</small></div>
+              <ul class="app__list" data-activity aria-label="Recent payments"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ================= FEATURE CARD ================= -->
@@ -145,10 +197,10 @@
               <div class="receipt__total"><span>Total</span><b class="serif">$96.00</b></div>
             </div>
             <div class="split__people">
-              <div class="person" style="--c:#f59e8b;--i:0"><span class="av">A</span><b>$24.00</b></div>
-              <div class="person" style="--c:#8fb3ff;--i:1"><span class="av">M</span><b>$24.00</b></div>
-              <div class="person" style="--c:#c9a7ff;--i:2"><span class="av">J</span><b>$24.00</b></div>
-              <div class="person" style="--c:#9be0c7;--i:3"><span class="av">L</span><b>$24.00</b></div>
+              <div class="person" style="--c:#93c5fd;--i:0"><span class="av">A</span><b>$24.00</b></div>
+              <div class="person" style="--c:#bfdbfe;--i:1"><span class="av">M</span><b>$24.00</b></div>
+              <div class="person" style="--c:#a5b4fc;--i:2"><span class="av">J</span><b>$24.00</b></div>
+              <div class="person" style="--c:#7dd3fc;--i:3"><span class="av">L</span><b>$24.00</b></div>
             </div>
           </div>
         </div>
@@ -157,7 +209,7 @@
         <div class="scene" data-scene="2">
           <div class="req">
             <div class="req__card">
-              <span class="av av--lg" style="--c:#c9a7ff">J</span>
+              <span class="av av--lg" style="--c:#a5b4fc">J</span>
               <small>Jordan is requesting</small>
               <b class="serif">$15.00</b>
               <p>🎬 Dune: Part Three — IMAX</p>
@@ -200,7 +252,7 @@
     <section class="feed" id="feed">
       <p class="eyebrow reveal">The feed</p>
       <h2 class="display serif reveal" data-words>Life, <em>split evenly.</em></h2>
-      <div class="marquee" aria-hidden="true">
+      <div class="marquee">
         <div class="marquee__row" data-marquee="0"></div>
         <div class="marquee__row marquee__row--rev" data-marquee="1"></div>
       </div>
@@ -227,14 +279,14 @@
               <small>Balance</small>
               <b class="serif dash__bal">$2,480.16</b>
               <svg class="dash__chart" viewBox="0 0 300 90" preserveAspectRatio="none">
-                <defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9c7ff" stop-opacity=".35" /><stop offset="1" stop-color="#b9c7ff" stop-opacity="0" /></linearGradient></defs>
+                <defs><linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93c5fd" stop-opacity=".35" /><stop offset="1" stop-color="#93c5fd" stop-opacity="0" /></linearGradient></defs>
                 <path class="dash__area" d="M0 70 C30 64 45 40 75 46 S120 72 150 52 S200 18 230 30 S280 22 300 10 V90 H0Z" fill="url(#ch)" />
                 <path class="dash__line" d="M0 70 C30 64 45 40 75 46 S120 72 150 52 S200 18 230 30 S280 22 300 10" />
               </svg>
               <div class="dash__rows">
-                <div><span class="av" style="--c:#f59e8b">M</span>Maya · 🍣<em>+$18.40</em></div>
-                <div><span class="av" style="--c:#8fb3ff">L</span>Leo · 🚕<em>−$12.00</em></div>
-                <div><span class="av" style="--c:#9be0c7">P</span>Priya · 🎂<em>−$20.00</em></div>
+                <div><span class="av" style="--c:#93c5fd">M</span>Maya · 🍣<em>+$18.40</em></div>
+                <div><span class="av" style="--c:#bfdbfe">L</span>Leo · 🚕<em>−$12.00</em></div>
+                <div><span class="av" style="--c:#7dd3fc">P</span>Priya · 🎂<em>−$20.00</em></div>
               </div>
             </div>
           </div>
@@ -244,7 +296,7 @@
           <div class="phone__screen mini">
             <small>Split with 3</small>
             <b class="serif">$31.25</b>
-            <div class="mini__avs"><span class="av" style="--c:#f59e8b">M</span><span class="av" style="--c:#8fb3ff">L</span><span class="av" style="--c:#9be0c7">P</span></div>
+            <div class="mini__avs"><span class="av" style="--c:#93c5fd">M</span><span class="av" style="--c:#bfdbfe">L</span><span class="av" style="--c:#7dd3fc">P</span></div>
             <span class="mini__sync">⟳ Synced</span>
           </div>
         </div>
@@ -285,6 +337,29 @@
     <div class="footer__word serif" aria-hidden="true">Nexus</div>
     <div class="footer__bottom"><span>© 2026 Nexus</span><span>Made for people who pay each other back.</span></div>
   </footer>
+
+  <!-- ================= TRANSACTION POP-UP ================= -->
+  <div class="txm" data-txm aria-hidden="true">
+    <div class="txm__scrim" data-txm-close></div>
+    <div class="txm__card" role="dialog" aria-modal="true" aria-labelledby="txm-label">
+      <button class="txm__x" data-txm-close aria-label="Close">✕</button>
+      <div class="txm__sparks" data-txm-sparks aria-hidden="true"></div>
+      <div class="txm__avwrap"><span class="txm__av" data-txm-av>M</span><span class="txm__ring"></span><span class="txm__ring"></span></div>
+      <small class="txm__label" id="txm-label" data-txm-label>Maya paid you</small>
+      <b class="txm__amt serif" data-txm-amt>$18.40</b>
+      <p class="txm__note" data-txm-note>🍣 Sushi Friday</p>
+      <div class="txm__status"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>Completed · arrived instantly</div>
+      <dl class="txm__rows">
+        <div><dt>When</dt><dd data-txm-when>Today, 7:42 PM</dd></div>
+        <div><dt>Paid with</dt><dd>Nexus balance</dd></div>
+        <div><dt>Transaction ID</dt><dd class="mono" data-txm-id>NX-8F2A-19C4</dd></div>
+      </dl>
+      <div class="txm__btns">
+        <button class="btn-solid btn-solid--sm" data-txm-close>Pay back</button>
+        <button class="glass-btn" data-txm-close>Split again</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/main.js"></script>
 </body>
