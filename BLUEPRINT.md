@@ -187,7 +187,7 @@ All tools here are domain-free. They live in `tools/` and are referenced by mand
 - [ ] **51 🤖** `tools/room-export.md`: how to export the BAND room [VERIFY in docs], where to save (`room-export/stage-N/`).
 - [x] **52 🤖** Write a tiny `tools/README.md` explaining each tool in one line, domain-free.
 - [x] **53 🤖** Re-run the mandate lint over `tools/*.md` too (tools are referenced by mandates; keep them generic).
-- [ ] **54 🤖** Commit, push, confirm the lint Action is green.
+- [x] **54 🤖** Commit, push, confirm the lint Action is green.
 - [ ] **55 🧑** Sanity check: can a stranger clone this repo and understand the factory in 5 minutes from `README.md` + `factory/DESIGN.md`? If not, tell Claude what's unclear.
 
 ---
@@ -196,7 +196,7 @@ All tools here are domain-free. They live in `tools/` and are referenced by mand
 
 Purpose: tune the factory until an unattended run succeeds, and prove genericness on non-track problems. Dry runs are never submitted as stages. Rerunning here is fine; rerunning in the official run is not.
 
-- [ ] **56 🤖** Write `dryruns/decoy-1.task.md`: a small unrelated service with one concurrency invariant (e.g. a warehouse stock-reservation service: "stock on hand never goes below zero under concurrent picks"). Deliberately **not** a money domain, so success proves the mandates aren't secretly tuned for pocketful. Include a UI requirement and the offline container requirement, mirroring the real task's structure.
+- [x] **56 🤖** Write `dryruns/decoy-1.task.md`: a small unrelated service with one concurrency invariant (e.g. a warehouse stock-reservation service: "stock on hand never goes below zero under concurrent picks"). Deliberately **not** a money domain, so success proves the mandates aren't secretly tuned for pocketful. Include a UI requirement and the offline container requirement, mirroring the real task's structure.
 - [ ] **57 🧑** Start screen recording. Create a fresh BAND room, add all five seats, paste `decoy-1.task.md`. **Hands off.** Let it run to the Integrator's done/stop.
 - [ ] **58 🧑** Export the room, save to `dryruns/decoy-1/room-export/`. Log cost + wall time.
 - [ ] **59 🤖** Post-mortem `dryruns/decoy-1/POSTMORTEM.md`: where did seats stall, loop, ask the human, skip evidence, or approve bad work? Which rejections actually changed code? Did the container check pass?
