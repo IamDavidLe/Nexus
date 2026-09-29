@@ -71,8 +71,12 @@ $$(".glass-btn").forEach((b) => b.addEventListener("pointermove", (e) => {
   b.style.setProperty("--my", `${e.clientY - r.top}px`);
 }));
 
-/* ---------- Hero copy ---------- */
+/* ---------- Hero ---------- */
 const heroContent = $("[data-hero-content]");
+const heroVideo = $("[data-hero-video]");
+// hold on the poster frame for people who prefer less motion; pause offscreen to save battery
+if (reduced) { heroVideo.removeAttribute("autoplay"); heroVideo.pause(); }
+else new IntersectionObserver(([e]) => { if (e.isIntersecting) heroVideo.play().catch(() => {}); else heroVideo.pause(); }).observe(heroVideo);
 
 /* ---------- Scroll: hero copy, nav, statement ---------- */
 function onScroll() {
