@@ -1,0 +1,17 @@
+# dependencies and build output
+node_modules/
+dist/
+
+# secrets: never commit real keys (see .env.example for the names)
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# local room caches — [VERIFY] exact BAND cache path in docs.band.ai
+.band/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
