@@ -145,7 +145,7 @@ dark-factory/
 
 Mandates are the heart of the 50% Factory score and the #1 disqualifier. Write them as if the next job were a hospital scheduling system or a compiler.
 
-- [ ] **31 🤖** Write `factory/mandates/planner.md` using this skeleton (all five mandates share it):
+- [x] **31 🤖** Write `factory/mandates/planner.md` using this skeleton (all five mandates share it):
   ```
   # Mandate: <Role>
   ## Purpose            — one sentence, domain-free
@@ -158,15 +158,15 @@ Mandates are the heart of the 50% Factory score and the #1 disqualifier. Write t
   ## When blocked       — assume, record, proceed; never ask the human
   ## Done means         — your exit condition
   ```
-- [ ] **32 🤖** Write `builder.md`. Include: read the task + prior stage first; smallest change that satisfies a work item; tests with every change; enforce correctness invariants at the storage layer, not only in application code (generic phrasing — no domain words); make every externally triggered write safe to retry.
-- [ ] **33 🤖** Write `verifier.md`. Include: derive checks only from the task text, never from the Builder's code or tests; run the clean offline container check; test UI at a narrow and a wide viewport; reject on any unexplained difference.
-- [ ] **34 🤖** Write `breaker.md`. Include: read the invariants stated in the task; for each, write an attack (parallel conflicting requests, duplicate/replayed requests, boundary values, clock and calendar edge cases, precision edge cases); an invariant is "held" only if the attack runs at or above the concurrency stated in the task.
-- [ ] **35 🤖** Write `integrator.md`. Include: assemble the stage folder; run previous stages' suites; confirm sign-offs; write the stage release note; apply stop conditions; export evidence.
-- [ ] **36 🤖** Write `tools/lint-mandates.sh`: case-insensitive grep of every line in `tools/banned-terms.txt` against `factory/mandates/*.md` and `factory/protocols/*.md`. Also flag: anything matching `/[a-z]+/` URL-like paths, `snake_case` or `camelCase` identifiers, HTTP status numbers, and 3-digit error codes. Exit non-zero on any hit.
-- [ ] **37 🤖** Handle the `transaction` collision: allow it only in the phrase "database transaction"; flag any other use. Document the exception inside the script.
-- [ ] **38 🤖** Add a GitHub Action `.github/workflows/mandate-lint.yml` running the lint on every push. Badge it in the README — visible proof of genericness.
-- [ ] **39 🤖** Run the lint. Fix every hit by generalizing the wording, never by removing the rule.
-- [ ] **40 🤖** **The swap test:** write `factory/SWAP-TEST.md` — reread each mandate against three unrelated projects (a CLI compiler, a hospital shift scheduler, an e-commerce search service) and record one sentence per project per seat confirming it still makes sense. This is the exact test the rules describe; showing it to judges is free points.
+- [x] **32 🤖** Write `builder.md`. Include: read the task + prior stage first; smallest change that satisfies a work item; tests with every change; enforce correctness invariants at the storage layer, not only in application code (generic phrasing — no domain words); make every externally triggered write safe to retry.
+- [x] **33 🤖** Write `verifier.md`. Include: derive checks only from the task text, never from the Builder's code or tests; run the clean offline container check; test UI at a narrow and a wide viewport; reject on any unexplained difference.
+- [x] **34 🤖** Write `breaker.md`. Include: read the invariants stated in the task; for each, write an attack (parallel conflicting requests, duplicate/replayed requests, boundary values, clock and calendar edge cases, precision edge cases); an invariant is "held" only if the attack runs at or above the concurrency stated in the task.
+- [x] **35 🤖** Write `integrator.md`. Include: assemble the stage folder; run previous stages' suites; confirm sign-offs; write the stage release note; apply stop conditions; export evidence.
+- [x] **36 🤖** Write `tools/lint-mandates.sh`: case-insensitive grep of every line in `tools/banned-terms.txt` against `factory/mandates/*.md` and `factory/protocols/*.md`. Also flag: anything matching `/[a-z]+/` URL-like paths, `snake_case` or `camelCase` identifiers, HTTP status numbers, and 3-digit error codes. Exit non-zero on any hit.
+- [x] **37 🤖** Handle the `transaction` collision: allow it only in the phrase "database transaction"; flag any other use. Document the exception inside the script.
+- [x] **38 🤖** Add a GitHub Action `.github/workflows/mandate-lint.yml` running the lint on every push. Badge it in the README — visible proof of genericness.
+- [x] **39 🤖** Run the lint. Fix every hit by generalizing the wording, never by removing the rule.
+- [x] **40 🤖** **The swap test:** write `factory/SWAP-TEST.md` — reread each mandate against three unrelated projects (a CLI compiler, a hospital shift scheduler, an e-commerce search service) and record one sentence per project per seat confirming it still makes sense. This is the exact test the rules describe; showing it to judges is free points.
 - [ ] **41 🧑** Read all five mandates. Anything that smells like the track → cut it. (15 min.)
 - [ ] **42 🧑** Create the five seats in BAND Desktop, attach each mandate file as the seat's standing instruction, assign runtime/model per Step 5. Screenshot the seat list → `media/seats.png`. [VERIFY] how BAND attaches mandates to seats.
 
