@@ -95,7 +95,7 @@ dark-factory/
 - [x] **6 🤖** `git init` the repo with the layout above, MIT `LICENSE`, `.gitignore` (node_modules, .env, *.key, room caches).
 - [ ] **7 🧑** Create the **public** GitHub repo `dark-factory` and push.
 - [x] **8 🤖** Add `.env.example` listing required keys (names only). Add a pre-commit hook that blocks commits containing `sk-`, `ANTHROPIC_API_KEY=`, `FEATHERLESS` key patterns.
-- [ ] **9 🤖** Verify Docker works locally: `docker run --rm --network none alpine echo ok`. Record Docker version in `tools/env.md`.
+- [x] **9 🤖** Verify Docker works locally: `docker run --rm --network none alpine echo ok`. Record Docker version in `tools/env.md`.
 - [x] **10 🤖** Create `tools/cost-log.md` with a table: `date | run | seat | model | tokens in | tokens out | $ | wall time`. Every run from now on gets a row (judged: "measured costs").
 
 ---
@@ -177,7 +177,7 @@ Mandates are the heart of the 50% Factory score and the #1 disqualifier. Write t
 All tools here are domain-free. They live in `tools/` and are referenced by mandates generically ("run the container check in tools/").
 
 - [x] **43 🤖** `tools/clean-container-check.sh <stage-dir>`: `docker build --network none` (fallback: build then run with `--network none` if spec allows build-time fetch — see step 16), run with the spec's CPU/memory caps (`--cpus`, `--memory`) and `--network none`, wait for health, hit the health endpoint path **read from an env/arg, not hard-coded**, exit 0/1, save log to `<stage-dir>/evidence/container-check.log`.
-- [ ] **44 🤖** Test step 43 on a hello-world server with vendored deps. Confirm it fails correctly when a dependency needs the network.
+- [x] **44 🤖** Test step 43 on a hello-world server with vendored deps. Confirm it fails correctly when a dependency needs the network.
 - [x] **45 🤖** `tools/offline-deps.md`: generic guidance for vendoring deps per ecosystem (npm `npm ci` into image with lockfile + vendored cache, pip wheels directory, Go vendor). The task brief picks the stack.
 - [x] **46 🤖** `tools/race.sh`/`tools/race.py`: generic concurrency driver — takes a request template file, N parallel workers, M repeats, and a results file. No domain logic. Breaker uses it with templates it writes during the run.
 - [x] **47 🤖** `tools/replay.py`: sends the same request K times (same idempotency header if the target supports one — header name passed as arg) to test retry-safety.

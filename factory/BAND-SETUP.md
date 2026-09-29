@@ -38,26 +38,51 @@ Two platform rules shape the protocols:
 ## Creating the five seats (blueprint step 42)
 
 Run once from the repo root, after the mandates are approved. Each seat gets its own session
-scope so five agents can share one working copy.
+scope so five agents can share one working copy. Done on 2026-09-29: all five seats created and
+reporting `Connected running=true` in `band list`.
+
+**Prerequisite:** a current Claude Code. The seat runtime is launched with `--permission-mode auto`,
+which old versions reject (2.1.17 failed; 2.1.284 works). Run `claude update` first, and remove any
+leftover npm-global copy (`npm -g uninstall @anthropic-ai/claude-code`) so BAND launches the native one.
+
+**1. Probe the runtime** (`--dry-run` cannot be combined with `--instructions-file`, so probe without it):
+
+```bash
+ROOT=$(pwd -W)   # Windows path in Git Bash; use "$PWD" elsewhere
+band agent create --name Planner --cwd "$ROOT" --session planner \
+  --transport claude-code-cli --claude-context-mode local_config --claude-strict-mcp-config --dry-run
+```
+
+Expect every check to pass and exactly **1 MCP server** (BAND's own relay).
+
+**2. Create the seats:**
 
 ```bash
 for seat in planner builder verifier breaker integrator; do
-  band agent create \
-    --name "$(tr '[:lower:]' '[:upper:]' <<< ${seat:0:1})${seat:1}" \
-    --description "Factory seat: $seat. Standing mandate: factory/mandates/$seat.md" \
-    --cwd "$PWD" \
-    --session "$seat" \
+  Name="$(tr '[:lower:]' '[:upper:]' <<< ${seat:0:1})${seat:1}"
+  band agent create --name "$Name" \
+    --description "Dark factory seat: $Name. Standing mandate: factory/mandates/$seat.md" \
+    --cwd "$ROOT" --session "$seat" \
     --transport claude-code-cli \
-    --instructions-file "factory/mandates/$seat.md" \
-    --dry-run
+    --claude-context-mode local_config --claude-strict-mcp-config \
+    --instructions-file "$ROOT/factory/mandates/$seat.md"
 done
 ```
 
-Remove `--dry-run` once the dry-run output looks right. Then confirm each seat's mandate is linked:
+**3. Verify:**
 
 ```bash
-band agent instructions show --session planner --reveal
+band agent instructions show --session planner --reveal   # path points at the mandate file
+band list                                                 # five seats, Connected running=true
 ```
+
+Why these flags:
+
+- `--claude-strict-mcp-config` loads only BAND's relay. Without it a seat inherits every MCP server in
+  the operator's personal config (mail, calendars, databases): unsafe for an unattended agent and not
+  reproducible from the repo. With it, a seat has the standard coding tools and nothing else.
+- `--claude-context-mode local_config` keeps the operator's Claude Code login. `bare` mode is more
+  isolated but reads no login, so it only works with an API key in the daemon's environment.
 
 Notes:
 
