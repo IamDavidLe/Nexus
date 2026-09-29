@@ -1,0 +1,6 @@
+# Scripts must keep Unix line endings on every platform, or bash and containers break on checkout.
+*.sh        text eol=lf
+*.py        text eol=lf
+*.mjs       text eol=lf
+Dockerfile  text eol=lf
+.githooks/* text eol=lf
