@@ -36,49 +36,19 @@
 
     <!-- ================= HERO ================= -->
     <section class="hero" id="top" data-hero>
-      <div class="hero__bg" aria-hidden="true">
-        <div class="hero__glow"></div>
-        <div class="hero__grid"></div>
-        <div class="hero__dawn"></div>
+      <div class="hero__media" aria-hidden="true">
+        <img src="/hero.webp" alt="" width="2048" height="1152" fetchpriority="high" decoding="async" />
+        <span class="hero__light"></span>
       </div>
-      <canvas class="hero__canvas" data-hero-canvas aria-hidden="true"></canvas>
-      <div class="planet" aria-hidden="true"></div>
-
-      <!-- friends floating above the horizon; payments travel between them and the hub -->
-      <div class="net" aria-hidden="true">
-        <span class="node" data-node="maya" data-depth=".9" style="--x:12%;--y:31%;--mx:12%;--my:74%;--s:1;--c:#bfdbfe;--i:0"><span class="node__av">M</span><em>Maya</em></span>
-        <span class="node" data-node="leo" data-depth="1" style="--x:87%;--y:25%;--mx:88%;--my:71%;--s:1.1;--c:#93c5fd;--i:1"><span class="node__av">L</span><em>Leo</em></span>
-        <span class="node" data-node="jordan" data-depth=".6" style="--x:18%;--y:63%;--mx:27%;--my:84%;--s:.84;--c:#a5b4fc;--i:2"><span class="node__av">J</span><em>Jordan</em></span>
-        <span class="node" data-node="priya" data-depth=".65" style="--x:83%;--y:60%;--mx:74%;--my:84%;--s:.9;--c:#7dd3fc;--i:3"><span class="node__av">P</span><em>Priya</em></span>
-        <span class="node node--far" data-node="sam" data-depth=".4" style="--x:6%;--y:77%;--s:.72;--c:#dbeafe;--i:4"><span class="node__av">S</span><em>Sam</em></span>
-        <span class="node node--far" data-node="noah" data-depth=".45" style="--x:94%;--y:74%;--s:.76;--c:#c7d2fe;--i:5"><span class="node__av">N</span><em>Noah</em></span>
-        <span class="hub" data-hub><span class="hub__core">N</span><em>Home</em></span>
-      </div>
-
-      <!-- arrival notification (positioned by JS) -->
-      <div class="ping" data-ping aria-hidden="true">
-        <span class="ping__av" data-ping-av>M</span>
-        <div><b data-ping-title>Maya received $40.00</b><small data-ping-note>🌸 For the flowers</small></div>
-      </div>
+      <div class="hero__fade" aria-hidden="true"></div>
 
       <div class="hero__content" data-hero-content>
-        <a href="#features" class="hero__badge"><b>New</b>Split any bill in one tap <span aria-hidden="true">→</span></a>
-        <h1 class="hero__title">
-          <span class="hw">Where</span> <span class="hw">every</span> <span class="hw">dollar</span><br class="hero__br"> <span class="hw">finds</span> <span class="hw">its</span> <span class="hw">way</span> <span class="hw hw--key">home.<svg viewBox="0 0 200 24" preserveAspectRatio="none" aria-hidden="true"><path d="M4 16 C 50 6, 110 4, 196 12" /></svg></span>
-        </h1>
-        <p class="hero__lead">
-          Send, split and request money with friends, family and roommates in seconds, on the web or in the app.
-          Simple, secure, and a little bit like magic.
+        <h1 class="hero__title rise">Where every dollar finds its way home.</h1>
+        <p class="hero__lead rise rise--d1">
+          Nexus is how friends, families and roommates send, split and request money in seconds, on the web or in the app.
+          It's simple, secure and feels a little like magic.
         </p>
-        <div class="hero__ctas">
-          <a href="./dashboard.html" class="btn-solid">Get Nexus</a>
-          <a href="#how" class="glass-btn hero__ghost">How it works <span aria-hidden="true">→</span></a>
-        </div>
-        <ul class="hero__proof">
-          <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>$0 fees between friends</li>
-          <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>Lands in under a second</li>
-          <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" /></svg>256-bit encryption</li>
-        </ul>
+        <a href="./dashboard.html" class="glass-btn hero__cta fade-rise">Get Nexus</a>
       </div>
     </section>
 
