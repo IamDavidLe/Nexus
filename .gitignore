@@ -13,6 +13,9 @@ __pycache__/
 # local room caches — [VERIFY] exact BAND cache path in docs.band.ai
 .band/
 
+# local browser and development telemetry
+.gstack/
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
