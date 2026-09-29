@@ -2,6 +2,11 @@
 
 The loop every stage follows. Seats talk only in the room, always @mentioning the recipient.
 
+**Talking in the room.** A seat's own output is private; other seats only see what is posted to the
+room with the messaging tool, and a seat only receives messages that @mention it. Anything another
+seat must act on (plans, packets, sign-offs, rejections, assumptions) is posted and @mentions every
+seat that must act. A message that mentions no one is read by no one.
+
 1. **Dispatch.** The human posts the stage task once, @mentioning the Planner. That is the only
    human input for the whole stage.
 2. **Plan.** The Planner reads the task and the previous stage (if any), sets the board goal, and
