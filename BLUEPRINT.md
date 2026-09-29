@@ -92,11 +92,11 @@ dark-factory/
 - [ ] **3 🧑** Check email for the Featherless promo code + setup guide. Redeem it. Set a calendar reminder to cancel before the next billing cycle.
 - [ ] **4 🧑** In BAND Desktop: sign in, install the CLI and the coding-agent plugin, **run the readiness checks** (docs.band.ai/jam). Screenshot the green result → `media/readiness.png`.
 - [ ] **5 🧑** Decide the seat runtime(s). Default: Claude Code for seats (strongest coder), optionally one Featherless-backed seat (e.g. Qwen/DeepSeek coder) for the Breaker to show model diversity and lower cost. [VERIFY which adapters BAND supports in SDK setup docs.]
-- [ ] **6 🤖** `git init` the repo with the layout above, MIT `LICENSE`, `.gitignore` (node_modules, .env, *.key, room caches).
+- [x] **6 🤖** `git init` the repo with the layout above, MIT `LICENSE`, `.gitignore` (node_modules, .env, *.key, room caches).
 - [ ] **7 🧑** Create the **public** GitHub repo `dark-factory` and push.
-- [ ] **8 🤖** Add `.env.example` listing required keys (names only). Add a pre-commit hook that blocks commits containing `sk-`, `ANTHROPIC_API_KEY=`, `FEATHERLESS` key patterns.
+- [x] **8 🤖** Add `.env.example` listing required keys (names only). Add a pre-commit hook that blocks commits containing `sk-`, `ANTHROPIC_API_KEY=`, `FEATHERLESS` key patterns.
 - [ ] **9 🤖** Verify Docker works locally: `docker run --rm --network none alpine echo ok`. Record Docker version in `tools/env.md`.
-- [ ] **10 🤖** Create `tools/cost-log.md` with a table: `date | run | seat | model | tokens in | tokens out | $ | wall time`. Every run from now on gets a row (judged: "measured costs").
+- [x] **10 🤖** Create `tools/cost-log.md` with a table: `date | run | seat | model | tokens in | tokens out | $ | wall time`. Every run from now on gets a row (judged: "measured costs").
 
 ---
 
