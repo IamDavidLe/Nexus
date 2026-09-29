@@ -116,7 +116,7 @@ dark-factory/
 
 ## PHASE C — Factory design (Steps 19–30) · Tue Sep 29
 
-- [ ] **19 🤖** Write `factory/DESIGN.md`: the band's shape. Recommended 5 seats (min is 3; 5 gives real review and a clear story):
+- [x] **19 🤖** Write `factory/DESIGN.md`: the band's shape. Recommended 5 seats (min is 3; 5 gives real review and a clear story):
 
   | Seat | Writes code? | Owns | Can reject? |
   |------|--------------|------|-------------|
@@ -127,16 +127,16 @@ dark-factory/
   | **Integrator** | Minimal (glue only) | Merging, stage folder assembly, final build, release note, stop condition | Rejects release if Verifier or Breaker hasn't signed off |
 
   The story for judges: **two of five seats can't ship product code; their only power is refusal.** Review must visibly change things.
-- [ ] **20 🤖** Write `factory/protocols/workflow.md`: the loop. Task arrives → Planner emits work items → Builder claims one → Builder hands off with evidence → Verifier + Breaker check in parallel → reject (back to Builder with a reproducible failure) or accept → Integrator assembles → repeat → Integrator declares stage done.
-- [ ] **21 🤖** Write `factory/protocols/handoff.md` — the evidence packet every handoff must contain: work item ID, files changed, commands run with exact output, test results, known gaps, how to reproduce. No packet → automatic reject.
-- [ ] **22 🤖** Write `factory/protocols/rejection.md`: a rejection must include the failing command, observed vs expected, and the smallest reproduction. Vague rejections are themselves rejected by the Builder.
-- [ ] **23 🤖** Write `factory/protocols/definition-of-done.md` (generic): all acceptance criteria in the task pass; independent verifier check passes; adversarial checks pass; clean offline container build + start + health check passes; UI reachable and usable at mobile and desktop widths; handoff packets archived.
-- [ ] **24 🤖** Write `factory/protocols/autonomy.md` — **critical for C8**: seats never ask the human anything. If blocked, a seat records the assumption it made, the reason, and proceeds. Max 3 reject cycles per work item before the Planner splits or rescopes it. The Integrator is the only seat allowed to declare a stage finished or partially finished.
-- [ ] **25 🤖** Write `factory/protocols/stop-conditions.md`: time box per stage [VERIFY a sensible limit after dry runs], token budget per stage, and what the Integrator ships if the box runs out (the last fully verified state, never an unverified one).
-- [ ] **26 🤖** Write `factory/protocols/extend-without-breaking.md`: every stage N starts by copying stage N-1 into `stage-N/`, running the previous stage's full test suite green **before** any change, and keeping it green. This directly addresses "extend what it built without breaking what already works."
-- [ ] **27 🤖** Write `factory/templates/WORKITEM.template.md` and `HANDOFF.template.md`.
-- [ ] **28 🤖** Decide how work items are represented in BAND (BAND Desktop shows "work items and decisions" on its board). [VERIFY] via docs.band.ai how seats create/claim/close work items and record decisions, and use native BAND objects rather than chat-only coordination — judges read the room.
-- [ ] **29 🤖** Write `factory/protocols/git.md`: each seat commits with a prefix (`[planner]`, `[builder]`, `[verifier]`, `[breaker]`, `[integrator]`) and references the work item ID. This makes "code traces to the room" provable from `git log`.
+- [x] **20 🤖** Write `factory/protocols/workflow.md`: the loop. Task arrives → Planner emits work items → Builder claims one → Builder hands off with evidence → Verifier + Breaker check in parallel → reject (back to Builder with a reproducible failure) or accept → Integrator assembles → repeat → Integrator declares stage done.
+- [x] **21 🤖** Write `factory/protocols/handoff.md` — the evidence packet every handoff must contain: work item ID, files changed, commands run with exact output, test results, known gaps, how to reproduce. No packet → automatic reject.
+- [x] **22 🤖** Write `factory/protocols/rejection.md`: a rejection must include the failing command, observed vs expected, and the smallest reproduction. Vague rejections are themselves rejected by the Builder.
+- [x] **23 🤖** Write `factory/protocols/definition-of-done.md` (generic): all acceptance criteria in the task pass; independent verifier check passes; adversarial checks pass; clean offline container build + start + health check passes; UI reachable and usable at mobile and desktop widths; handoff packets archived.
+- [x] **24 🤖** Write `factory/protocols/autonomy.md` — **critical for C8**: seats never ask the human anything. If blocked, a seat records the assumption it made, the reason, and proceeds. Max 3 reject cycles per work item before the Planner splits or rescopes it. The Integrator is the only seat allowed to declare a stage finished or partially finished.
+- [x] **25 🤖** Write `factory/protocols/stop-conditions.md`: time box per stage [VERIFY a sensible limit after dry runs], token budget per stage, and what the Integrator ships if the box runs out (the last fully verified state, never an unverified one).
+- [x] **26 🤖** Write `factory/protocols/extend-without-breaking.md`: every stage N starts by copying stage N-1 into `stage-N/`, running the previous stage's full test suite green **before** any change, and keeping it green. This directly addresses "extend what it built without breaking what already works."
+- [x] **27 🤖** Write `factory/templates/WORKITEM.template.md` and `HANDOFF.template.md`.
+- [x] **28 🤖** Decide how work items are represented in BAND (BAND Desktop shows "work items and decisions" on its board). [VERIFY] via docs.band.ai how seats create/claim/close work items and record decisions, and use native BAND objects rather than chat-only coordination — judges read the room.
+- [x] **29 🤖** Write `factory/protocols/git.md`: each seat commits with a prefix (`[planner]`, `[builder]`, `[verifier]`, `[breaker]`, `[integrator]`) and references the work item ID. This makes "code traces to the room" provable from `git log`.
 - [ ] **30 🧑** Review `factory/DESIGN.md` and protocols. Approve or edit. (10 min.)
 
 ---
