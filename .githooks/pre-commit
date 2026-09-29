@@ -1,0 +1,30 @@
+#!/bin/bash
+# Pre-commit hook: refuse commits that add secrets (BLUEPRINT step 8).
+# Scans only the lines being added in the staged diff. This file is skipped
+# because it has to spell out the patterns it looks for.
+set -euo pipefail
+
+patterns=(
+  'sk-[A-Za-z0-9_-]{16,}'                 # Anthropic / OpenAI style secret keys
+  'ANTHROPIC_API_KEY[[:space:]]*=[[:space:]]*[^[:space:]#]'   # a key with a value (the empty one in .env.example is fine)
+  'FEATHERLESS[A-Z_]*KEY[[:space:]]*=[[:space:]]*[^[:space:]#]'
+  'rc_[A-Za-z0-9]{24,}'                   # Featherless key format [VERIFY]
+  '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+)
+
+added=$(git diff --cached --no-color -U0 -- . ':(exclude).githooks/pre-commit' | grep -E '^\+[^+]' || true)
+[ -z "$added" ] && exit 0
+
+hits=0
+for p in "${patterns[@]}"; do
+  if matches=$(printf '%s\n' "$added" | grep -nE -e "$p"); then
+    echo "pre-commit: possible secret matching /$p/:" >&2
+    printf '%s\n' "$matches" | cut -c1-120 >&2
+    hits=1
+  fi
+done
+
+if [ "$hits" -ne 0 ]; then
+  echo "pre-commit: commit blocked. Move the value into .env (ignored) and retry." >&2
+  exit 1
+fi
