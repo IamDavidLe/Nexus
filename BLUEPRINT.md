@@ -176,17 +176,17 @@ Mandates are the heart of the 50% Factory score and the #1 disqualifier. Write t
 
 All tools here are domain-free. They live in `tools/` and are referenced by mandates generically ("run the container check in tools/").
 
-- [ ] **43 🤖** `tools/clean-container-check.sh <stage-dir>`: `docker build --network none` (fallback: build then run with `--network none` if spec allows build-time fetch — see step 16), run with the spec's CPU/memory caps (`--cpus`, `--memory`) and `--network none`, wait for health, hit the health endpoint path **read from an env/arg, not hard-coded**, exit 0/1, save log to `<stage-dir>/evidence/container-check.log`.
+- [x] **43 🤖** `tools/clean-container-check.sh <stage-dir>`: `docker build --network none` (fallback: build then run with `--network none` if spec allows build-time fetch — see step 16), run with the spec's CPU/memory caps (`--cpus`, `--memory`) and `--network none`, wait for health, hit the health endpoint path **read from an env/arg, not hard-coded**, exit 0/1, save log to `<stage-dir>/evidence/container-check.log`.
 - [ ] **44 🤖** Test step 43 on a hello-world server with vendored deps. Confirm it fails correctly when a dependency needs the network.
-- [ ] **45 🤖** `tools/offline-deps.md`: generic guidance for vendoring deps per ecosystem (npm `npm ci` into image with lockfile + vendored cache, pip wheels directory, Go vendor). The task brief picks the stack.
-- [ ] **46 🤖** `tools/race.sh`/`tools/race.py`: generic concurrency driver — takes a request template file, N parallel workers, M repeats, and a results file. No domain logic. Breaker uses it with templates it writes during the run.
-- [ ] **47 🤖** `tools/replay.py`: sends the same request K times (same idempotency header if the target supports one — header name passed as arg) to test retry-safety.
-- [ ] **48 🤖** `tools/viewport-check`: headless screenshot of a URL at 375px and 1280px (Playwright), saved to evidence. [VERIFY] Playwright browsers can be installed locally; this runs outside the product container, so network is fine here.
-- [ ] **49 🤖** `tools/evidence-pack.sh`: bundles `git diff --stat`, test output, container log, and screenshots into `<stage-dir>/evidence/<workitem>/`.
-- [ ] **50 🤖** `tools/cost-capture.md`: how to read token usage per seat from BAND/runtime logs [VERIFY], and append to `tools/cost-log.md`.
+- [x] **45 🤖** `tools/offline-deps.md`: generic guidance for vendoring deps per ecosystem (npm `npm ci` into image with lockfile + vendored cache, pip wheels directory, Go vendor). The task brief picks the stack.
+- [x] **46 🤖** `tools/race.sh`/`tools/race.py`: generic concurrency driver — takes a request template file, N parallel workers, M repeats, and a results file. No domain logic. Breaker uses it with templates it writes during the run.
+- [x] **47 🤖** `tools/replay.py`: sends the same request K times (same idempotency header if the target supports one — header name passed as arg) to test retry-safety.
+- [x] **48 🤖** `tools/viewport-check`: headless screenshot of a URL at 375px and 1280px (Playwright), saved to evidence. [VERIFY] Playwright browsers can be installed locally; this runs outside the product container, so network is fine here.
+- [x] **49 🤖** `tools/evidence-pack.sh`: bundles `git diff --stat`, test output, container log, and screenshots into `<stage-dir>/evidence/<workitem>/`.
+- [x] **50 🤖** `tools/cost-capture.md`: how to read token usage per seat from BAND/runtime logs [VERIFY], and append to `tools/cost-log.md`.
 - [ ] **51 🤖** `tools/room-export.md`: how to export the BAND room [VERIFY in docs], where to save (`room-export/stage-N/`).
-- [ ] **52 🤖** Write a tiny `tools/README.md` explaining each tool in one line, domain-free.
-- [ ] **53 🤖** Re-run the mandate lint over `tools/*.md` too (tools are referenced by mandates; keep them generic).
+- [x] **52 🤖** Write a tiny `tools/README.md` explaining each tool in one line, domain-free.
+- [x] **53 🤖** Re-run the mandate lint over `tools/*.md` too (tools are referenced by mandates; keep them generic).
 - [ ] **54 🤖** Commit, push, confirm the lint Action is green.
 - [ ] **55 🧑** Sanity check: can a stranger clone this repo and understand the factory in 5 minutes from `README.md` + `factory/DESIGN.md`? If not, tell Claude what's unclear.
 
