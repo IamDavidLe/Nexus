@@ -122,19 +122,11 @@ em { font-style: italic; }
 /* ---------- Hero: photographic dusk scene ---------- */
 .hero { position: relative; min-height: 100svh; overflow: hidden; isolation: isolate; background: #000; }
 .hero__media { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-.hero__media img {
+.hero__media video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%;
-  transform-origin: 40% 62%; animation: media-in 2.4s var(--ease) both, push-in 32s ease-in-out 2.4s infinite alternate;
+  animation: media-in 1.6s var(--ease) both;
 }
-@keyframes media-in { from { opacity: 0; transform: scale(1.08); filter: blur(12px); } }
-@keyframes push-in { from { transform: scale(1); } to { transform: scale(1.07) translateX(-1%); } }
-/* a soft band of light drifting across the cloud sea so the still breathes */
-.hero__light {
-  position: absolute; left: -40%; top: 48%; width: 80%; height: 34%; pointer-events: none; mix-blend-mode: screen; opacity: .5;
-  background: radial-gradient(closest-side, rgba(255, 214, 226, .35), rgba(191, 219, 254, .12) 55%, transparent);
-  filter: blur(20px); animation: drift-light 26s ease-in-out infinite alternate;
-}
-@keyframes drift-light { to { transform: translateX(120%); } }
+@keyframes media-in { from { opacity: 0; } }
 .hero__fade { position: absolute; left: 0; right: 0; bottom: 0; height: 40%; z-index: 1; pointer-events: none; background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, .6) 50%, transparent 100%); }
 
 .hero__content {
@@ -153,7 +145,7 @@ em { font-style: italic; }
   .hero__media { top: 24%; -webkit-mask-image: linear-gradient(transparent, #000 14%); mask-image: linear-gradient(transparent, #000 14%); }
 }
 @media (max-width: 700px) {
-  .hero__media img { object-position: 38% 62%; }
+  .hero__media video { object-position: 38% 62%; }
 }
 
 .rise { animation: rise .8s ease-out both; }
@@ -594,6 +586,6 @@ li.is-new .tx { background: rgba(147, 197, 253, .12); }
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
-  .reveal, [data-words] .wd, .rise, .fade-rise, .hero__media img, .fl, .toast { opacity: 1 !important; filter: none !important; transform: none !important; }
+  .reveal, [data-words] .wd, .rise, .fade-rise, .hero__media video, .fl, .toast { opacity: 1 !important; filter: none !important; transform: none !important; }
   .hw--key path { stroke-dashoffset: 0; }
 }
