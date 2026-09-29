@@ -1,0 +1,20 @@
+name: Mandate lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Mandates, protocols and tool docs are generic
+        run: bash tools/lint-mandates.sh
+      - name: Lint still catches violations (self-test)
+        run: |
+          bash tools/lint-mandates.sh tools/tests/lint-must-pass.md
+          if bash tools/lint-mandates.sh tools/tests/lint-must-fail.md; then
+            echo "::error::lint passed a file that must fail"; exit 1
+          fi
+          echo "self-test ok: violations are detected"
