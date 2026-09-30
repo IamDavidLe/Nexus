@@ -399,13 +399,157 @@ function toast(message) {
   if (!toasts) return;
   const node = document.createElement('div');
   node.className = 'toast';
-  node.innerHTML = `<i aria-hidden="true"></i>${message}`;
+  const indicator = document.createElement('i');
+  indicator.setAttribute('aria-hidden', 'true');
+  node.append(indicator, document.createTextNode(message));
   toasts.append(node);
   setTimeout(() => {
     node.classList.add('is-out');
     node.addEventListener('animationend', () => node.remove());
   }, 2800);
 }
+
+/* ---------- Quick actions ---------- */
+const actionModal = $('[data-action-modal]');
+const actionForm = $('[data-action-form]');
+const actionContent = $('[data-action-content]');
+const actionTitle = $('[data-action-title]');
+const actionEyebrow = $('[data-action-eyebrow]');
+const actionSubmit = $('[data-action-submit]');
+const actionError = $('[data-action-error]');
+let activeAction = null;
+let actionLastFocus = null;
+
+const actionViews = {
+  send: {
+    eyebrow: 'Move money',
+    title: 'Send a payment.',
+    submit: 'Send now',
+    content: `
+      <div class="action-fields">
+        <label>To<input name="recipient" required autocomplete="off" placeholder="Name, phone, or @handle" /></label>
+        <div class="action-fields__grid"><label>Amount<input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0.00" /></label><label>Note<input name="note" maxlength="80" placeholder="What’s this for?" /></label></div>
+      </div>`,
+  },
+  request: {
+    eyebrow: 'Get paid back',
+    title: 'Request money.',
+    submit: 'Send request',
+    content: `
+      <div class="action-fields">
+        <label>Request from<input name="recipient" required autocomplete="off" placeholder="Name, phone, or @handle" /></label>
+        <div class="action-fields__grid"><label>Amount<input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0.00" /></label><label>For<input name="note" maxlength="80" placeholder="Dinner, tickets…" /></label></div>
+      </div>`,
+  },
+  split: {
+    eyebrow: 'Share a cost',
+    title: 'Split a bill.',
+    submit: 'Create split',
+    content: `
+      <div class="action-fields">
+        <label>Total amount<input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0.00" /></label>
+        <label>Split with<input name="people" required autocomplete="off" placeholder="Maya, Leo, Priya" /></label>
+        <label>What was it for?<input name="note" maxlength="80" placeholder="Dinner, utilities…" /></label>
+        <div class="split-preview" data-split-preview><span>Add at least two people to calculate each share.</span><b>—</b></div>
+      </div>`,
+  },
+  scan: {
+    eyebrow: 'Pay in person',
+    title: 'Scan to pay.',
+    submit: 'Scan demo code',
+    content: `<div class="scan-stage" data-scan-stage><span>Align a QR code here</span><b>Demo scanner · no camera access needed</b></div>`,
+  },
+  'top-up': {
+    eyebrow: 'Add funds',
+    title: 'Top up your balance.',
+    submit: 'Add money',
+    content: `
+      <div class="action-fields">
+        <label>Amount<input name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="0.00" /></label>
+        <label>From<select name="source"><option>•••• 4821 · Debit card</option><option>•••• 0902 · Bank account</option><option>Apple Pay</option></select></label>
+      </div>`,
+  },
+};
+
+function setActionError(message = '') {
+  actionError.textContent = message;
+}
+
+function updateSplitPreview() {
+  if (activeAction !== 'split') return;
+  const preview = $('[data-split-preview]', actionContent);
+  const amount = Number(actionForm.elements.amount?.value);
+  const people = String(actionForm.elements.people?.value || '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+  if (!preview || !Number.isFinite(amount) || amount <= 0 || people.length < 2) return;
+  preview.innerHTML = `<span>${people.length} people · you included</span><b>${money(amount / (people.length + 1))} each</b>`;
+}
+
+function openAction(key, origin) {
+  const view = actionViews[key];
+  if (!view) return;
+  activeAction = key;
+  actionLastFocus = origin;
+  actionEyebrow.textContent = view.eyebrow;
+  actionTitle.textContent = view.title;
+  actionSubmit.textContent = view.submit;
+  actionContent.innerHTML = view.content;
+  setActionError();
+  actionModal.classList.add('is-open');
+  actionModal.setAttribute('aria-hidden', 'false');
+  const firstField = $('input, select', actionContent);
+  (firstField || $('[data-action-close]', actionModal)).focus();
+}
+
+function closeAction() {
+  if (!actionModal?.classList.contains('is-open')) return;
+  actionModal.classList.remove('is-open');
+  actionModal.setAttribute('aria-hidden', 'true');
+  actionLastFocus?.focus();
+  activeAction = null;
+}
+
+$$('[data-quick-action]').forEach((button) => button.addEventListener('click', () => openAction(button.dataset.quickAction, button)));
+$$('[data-action-close]').forEach((button) => button.addEventListener('click', closeAction));
+
+actionForm?.addEventListener('input', () => {
+  setActionError();
+  updateSplitPreview();
+});
+
+actionForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!activeAction) return;
+  if (activeAction === 'scan') {
+    const stage = $('[data-scan-stage]', actionContent);
+    stage?.classList.add('is-scanned');
+    if (stage) stage.querySelector('span').textContent = 'Corner Coffee Co. found';
+    if (stage) stage.querySelector('b').textContent = 'Ready for a $4.80 payment';
+    actionSubmit.textContent = 'Scanned';
+    toast('Demo code scanned — Corner Coffee Co. is ready to pay');
+    return;
+  }
+
+  const amount = Number(actionForm.elements.amount?.value);
+  if (!Number.isFinite(amount) || amount <= 0) return setActionError('Enter an amount greater than $0.');
+  const recipient = String(actionForm.elements.recipient?.value || '').trim();
+  const people = String(actionForm.elements.people?.value || '')
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  if (['send', 'request'].includes(activeAction) && !recipient) return setActionError('Add a recipient before continuing.');
+  if (activeAction === 'split' && people.length < 2) return setActionError('Add at least two people to create a split.');
+
+  const amountText = money(amount);
+  if (activeAction === 'send') toast(`${amountText} sent to ${recipient}`);
+  if (activeAction === 'request') toast(`${amountText} request sent to ${recipient}`);
+  if (activeAction === 'split') toast(`${amountText} split with ${people.length} people`);
+  if (activeAction === 'top-up') toast(`${amountText} added to your balance`);
+  closeAction();
+});
 
 {
   const freeze = $('[data-freeze]');
@@ -494,7 +638,8 @@ $$('.glass-btn').forEach((btn) =>
 /* ---------- Keyboard ---------- */
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (txm?.classList.contains('is-open')) closeTx();
+    if (actionModal?.classList.contains('is-open')) closeAction();
+    else if (txm?.classList.contains('is-open')) closeTx();
     else if (drawer?.classList.contains('is-open')) setDrawer(false);
   }
   if (e.key === '/' && document.activeElement !== search) {
