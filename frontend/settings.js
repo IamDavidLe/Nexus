@@ -27,3 +27,12 @@ form.addEventListener('submit', (event) => {
   localStorage.setItem(storageKey, JSON.stringify({ fields, toggles }));
   status.textContent = 'Changes saved on this device';
 });
+
+/* ---------- Mobile rail ---------- */
+const rail = document.querySelector('[data-rail]');
+const railToggle = document.querySelector('[data-rail-toggle]');
+railToggle?.addEventListener('click', () => {
+  const open = !rail.classList.contains('is-open');
+  rail.classList.toggle('is-open', open);
+  railToggle.setAttribute('aria-expanded', String(open));
+});
