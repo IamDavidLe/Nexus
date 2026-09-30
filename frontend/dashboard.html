@@ -182,11 +182,11 @@
 
       <!-- ---------- Quick actions ---------- -->
       <nav class="quick-actions reveal" style="--d:.1s" aria-label="Quick actions">
-        <a href="#send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" /></svg> Send</a>
-        <a href="#request"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg> Request</a>
-        <a href="#split"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><circle cx="12" cy="6.5" r="1.4" /><circle cx="12" cy="17.5" r="1.4" /></svg> Split</a>
-        <a href="#scan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" /></svg> Scan</a>
-        <a href="#top-up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12" /></svg> Top up</a>
+        <button type="button" data-quick-action="send"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6" /></svg> Send</button>
+        <button type="button" data-quick-action="request"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg> Request</button>
+        <button type="button" data-quick-action="split"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><circle cx="12" cy="6.5" r="1.4" /><circle cx="12" cy="17.5" r="1.4" /></svg> Split</button>
+        <button type="button" data-quick-action="scan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" /></svg> Scan</button>
+        <button type="button" data-quick-action="top-up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12" /></svg> Top up</button>
       </nav>
 
       <!-- ---------- Panels ---------- -->
@@ -364,6 +364,24 @@
         </li>
       </ul>
     </div>
+  </div>
+
+  <!-- ================= QUICK ACTIONS ================= -->
+  <div class="action-modal" data-action-modal aria-hidden="true">
+    <div class="action-modal__scrim" data-action-close></div>
+    <section class="action-modal__card" role="dialog" aria-modal="true" aria-labelledby="action-title">
+      <button class="action-modal__close" type="button" data-action-close aria-label="Close action">✕</button>
+      <p class="eyebrow" data-action-eyebrow>Move money</p>
+      <h2 id="action-title" data-action-title>Send a payment.</h2>
+      <form data-action-form novalidate>
+        <div class="action-modal__content" data-action-content></div>
+        <p class="action-modal__error" role="alert" data-action-error></p>
+        <div class="action-modal__buttons">
+          <button class="action-modal__cancel" type="button" data-action-close>Cancel</button>
+          <button class="glass-btn glass-btn--solid" type="submit" data-action-submit>Continue</button>
+        </div>
+      </form>
+    </section>
   </div>
 
   <!-- ================= TRANSACTION MODAL ================= -->
