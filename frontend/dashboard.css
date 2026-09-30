@@ -346,19 +346,28 @@ em { font-style: italic; }
 
 /* ---------- Card panel ---------- */
 .card__visual {
-  position: relative; display: grid; height: 178px; padding: 18px; overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .22); border-radius: var(--r-md);
-  background: radial-gradient(circle at 104% -6%, rgba(147, 197, 253, .85) 0%, transparent 42%), linear-gradient(140deg, #1d4ed8, #0a1a4a 58%, #04060f);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 24px 60px -30px rgba(29, 78, 216, .9);
+  position: relative; display: block; width: 100%; height: 178px; padding: 0; overflow: hidden;
+  border: 0; border-radius: var(--r-md); background: transparent; cursor: pointer;
+  perspective: 1000px; isolation: isolate;
   transition: transform .6s var(--ease), filter .5s;
 }
 .card__visual:hover { transform: translateY(-4px) rotate(-.6deg); }
+.card__visual:focus-visible { outline: 2px solid var(--blue-2); outline-offset: 4px; }
 .card__visual.is-frozen { filter: saturate(.3) brightness(.85); }
+.card__flip-inner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s var(--ease); }
+.card__visual[aria-pressed="true"] .card__flip-inner { transform: rotateY(180deg); }
+.card__face { position: absolute; inset: 0; display: grid; padding: 18px; overflow: hidden; border: 1px solid rgba(255, 255, 255, .22); border-radius: var(--r-md); backface-visibility: hidden; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 24px 60px -30px rgba(29, 78, 216, .9); }
+.card__face--front { background: radial-gradient(circle at 104% -6%, rgba(147, 197, 253, .85) 0%, transparent 42%), linear-gradient(140deg, #1d4ed8, #0a1a4a 58%, #04060f); }
+.card__face--back { grid-template-rows: 38px 1fr auto; padding: 18px 0 15px; transform: rotateY(180deg); background: radial-gradient(circle at 0% 100%, rgba(96, 165, 250, .38), transparent 45%), linear-gradient(140deg, #06143d, #102d77 56%, #091127); }
 .card__chip { width: 30px; height: 21px; border-radius: 5px; background: linear-gradient(135deg, #e9dcad, #a2854f); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
 .card__brand { align-self: center; justify-self: end; font: 400 30px var(--serif); letter-spacing: -.02em; }
 .card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; color: rgba(255, 255, 255, .82); font-size: 9px; letter-spacing: .14em; }
+.card__magstripe { display: block; width: 100%; height: 38px; background: linear-gradient(180deg, #020307, #22283a 48%, #030407); box-shadow: inset 0 1px rgba(255,255,255,.08); }
+.card__signature { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 7px; margin: 17px 18px 0; padding: 7px 9px; background: #e9edf3; color: #0b1630; text-align: left; }.card__signature > span { grid-column: 1 / -1; color: #4c5871; font: 500 7px var(--sans); letter-spacing: .13em; }.card__signature b { font: italic 17px/1 var(--serif); }.card__signature em { align-self: end; color: #172a58; font: 500 12px var(--sans); letter-spacing: .12em; }
+.card__back-detail { display: flex; justify-content: space-between; gap: 10px; padding: 0 18px; color: rgba(255,255,255,.7); font-size: 8px; letter-spacing: .09em; }
 .card__frost { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; background: rgba(2, 6, 16, .55); backdrop-filter: blur(3px); color: var(--blue-1); font: 500 11px var(--sans); letter-spacing: .24em; text-transform: uppercase; transition: opacity .4s; }
 .card__visual.is-frozen .card__frost { opacity: 1; }
+.card__hint { margin: 11px 0 -2px; color: var(--dim); font-size: 11px; text-align: center; }
 .card__rows { display: grid; gap: 2px; margin: 16px 0 4px; }
 .card__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid rgba(255, 255, 255, .07); font-size: 13px; }
 .card__row > span:last-child { color: var(--muted); font-size: 12px; }

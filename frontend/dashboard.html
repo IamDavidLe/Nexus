@@ -232,12 +232,22 @@
           <div class="panel__heading">
             <div><p class="eyebrow">Nexus card</p><h2 id="card-title">Ready when <em>you are.</em></h2></div>
           </div>
-          <div class="card__visual" data-card>
-            <span class="card__chip" aria-hidden="true"></span>
-            <b class="card__brand">Nexus</b>
-            <div class="card__foot"><span>VIRTUAL · DEBIT</span><span class="mono">•••• 4821</span></div>
+          <button class="card__visual" type="button" data-card aria-pressed="false" aria-label="Flip card to see card details">
+            <span class="card__flip-inner">
+              <span class="card__face card__face--front">
+                <span class="card__chip" aria-hidden="true"></span>
+                <b class="card__brand">Nexus</b>
+                <span class="card__foot"><span>VIRTUAL · DEBIT</span><span class="mono">•••• 4821</span></span>
+              </span>
+              <span class="card__face card__face--back">
+                <span class="card__magstripe" aria-hidden="true"></span>
+                <span class="card__signature"><span>AUTHORIZED SIGNATURE</span><b>Alex Morgan</b><em>384</em></span>
+                <span class="card__back-detail"><span>Virtual card · Ending 4821</span><span>nexus.money/support</span></span>
+              </span>
+            </span>
             <span class="card__frost" aria-hidden="true">Frozen</span>
-          </div>
+          </button>
+          <p class="card__hint">Click the card to flip</p>
           <div class="card__rows">
             <div class="card__row">
               <span>Freeze card</span>
