@@ -410,6 +410,13 @@ function toast(message) {
 {
   const freeze = $('[data-freeze]');
   const card = $('[data-card]');
+
+  card?.addEventListener('click', () => {
+    const flipped = card.getAttribute('aria-pressed') !== 'true';
+    card.setAttribute('aria-pressed', String(flipped));
+    card.setAttribute('aria-label', flipped ? 'Flip card to show its front' : 'Flip card to see card details');
+  });
+
   freeze?.addEventListener('click', () => {
     const on = freeze.getAttribute('aria-pressed') !== 'true';
     freeze.setAttribute('aria-pressed', String(on));
