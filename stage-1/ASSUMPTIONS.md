@@ -163,3 +163,47 @@ stage files, published as immutable room snapshots, then removed, so the reposit
 **Why.** It satisfies both rules exactly, and an immutable snapshot never follows a local file, so
 removing the source cannot affect what the room shows.
 **If wrong.** Nothing in the product is affected.
+
+### A15 — Proving "no console warnings" when the named tool cannot see warnings
+**Question.** The task requires "**No console errors or warnings.** Verified with
+`tools/viewport-check.mjs`" (`tasks/stage-1.task.md:126`). That tool subscribes only to
+`m.type() === "error"` (`tools/viewport-check.mjs:55`), and its pass gate considers `consoleErrors`,
+`pageErrors` and `overflowPx` only — so `viewport-report.json` carries no warning field at all. The
+named verifier is structurally blind to half the criterion.
+**Choice.** `tools/` is **not** modified. The warning half is proven by a stage-local check,
+`stage-1/checks/console-check.mjs`, which subscribes to every console message type, runs at both
+widths, fails on any `error` or `warning`, and writes `stage-1/evidence/console-report.json`. It
+reuses the `playwright-core` already installed in `tools/node_modules`, so nothing is installed. The
+named check still runs, unmodified, for the error half; the stage-local check *adds* the missing
+coverage. The Verifier re-proves the warning half independently (S1-13 c7).
+**Why.** `factory/protocols/git.md`'s ownership table assigns `tools/` to no seat, and the task says
+"Do not weaken the check" — so editing the shared harness is the one move clearly forbidden, while
+adding coverage next to it is clearly allowed. Leaving the criterion resting on a command that
+cannot fail on a warning would have shipped an unverified claim.
+**If wrong.** If the intended reading was that `tools/viewport-check.mjs` should itself be extended,
+the stage-local check's logic moves into it as a few lines and the evidence file changes name. The
+product does not move either way. Note that the harness is shared across stages, so extending it
+would change what every later stage is measured against — another reason to keep the change local.
+
+### A16 — What "answers `/healthz` within 5 seconds" is measured from, and by what
+**Question.** The task requires the service to start and answer `/healthz` "within **5 seconds**"
+(`tasks/stage-1.task.md:103`). `tools/clean-container-check.sh` polls in a `sleep 2` loop until
+`TIMEOUT` (default 60s) and prints no elapsed time, so a `PASS` proves "healthy eventually", not
+"healthy in 5s". Passing `--timeout 5` is not a fix either: every poll spawns a `docker run busybox`
+probe whose own startup would fall inside the deadline, so a 5s deadline would partly measure Docker
+overhead and could false-fail a compliant service.
+**Choice.** The 5-second requirement is measured by a **separate, timing-only** container run that
+publishes the port to the host — deliberately **not** `--network none`, so no probe container's
+startup sits inside the measured window. The window runs from `docker run` returning to the first
+successful health response. Three runs are taken and the **worst** must be under `5.000s`; the
+elapsed times are committed to `stage-1/evidence/startup-time.txt`. The offline check keeps its own
+default timeout and proves the offline rules, not the timing.
+**Why.** These are two different requirements from two different sections of the task — *Runtime
+limits* (how fast it starts) and *Offline container rules* (that it builds and runs with no network)
+— and one command cannot honestly prove both. Measuring from the host removes overhead that belongs
+to the harness rather than the product, which is the only way the number means what the task says.
+**If wrong.** If the intended measurement includes container-creation time, the window starts at
+`docker create`/`docker start` instead and the recorded numbers shift by that amount; the
+measurement harness is unchanged in shape. If the intended reading is that the offline check itself
+must enforce it, that requires editing `tools/` — forbidden under A15 — and would be raised as a
+stop condition rather than resolved silently.

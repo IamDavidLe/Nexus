@@ -448,8 +448,18 @@ with `--network none` inside the stated resource caps and answers the health che
 4. The base image is pinned by digest (`FROM python:3.11-slim@sha256:...`), and the Dockerfile
    contains no `apt-get`, `pip`, `npm`, `curl`, `wget` or `ADD <url>` — checked by:
    `python -m unittest tests.test_container.DockerfileTest -v`
-5. The container answers `/healthz` within **5 seconds** of `docker run`, measured in the test, well
-   inside the check's timeout — checked by: `python -m unittest tests.test_container.StartupTimeTest -v`
+5. The container answers `/healthz` within **5 seconds** of `docker run` returning, measured
+   explicitly: a **timing-only** run publishes the port to the host (no `--network none`, so no probe
+   container's own startup sits inside the deadline — assumption A16), and the test stamps the
+   interval from `docker run` returning to the first successful health response. Three runs; the
+   **worst** of the three is under `5.000s`. The elapsed times are written to
+   `stage-1/evidence/startup-time.txt` — checked by:
+   `python -m unittest tests.test_container.StartupTimeTest -v`
+   > Criterion 1 does **not** prove this. `tools/clean-container-check.sh` polls in a `sleep 2` loop
+   > up to `TIMEOUT` (default **60s**) and prints no elapsed time, so a `PASS` there means "healthy
+   > eventually", not "healthy in 5s". Passing `--timeout 5` is not a fix: each poll spawns a
+   > `docker run busybox` probe whose own startup would fall inside the deadline and could false-fail
+   > a compliant service. The offline check and the timing check are deliberately separate runs.
 6. The container stays inside a **512 MB** memory cap while serving the 50×5 race — checked by:
    `python -m unittest tests.test_container.MemoryCeilingTest -v`, which reads
    `docker stats --no-stream` during the run
@@ -503,8 +513,10 @@ with explicit loading, empty and error states.
 6. Creating an account through the form adds it to the list without a full page reload, and a `422`
    from the server is rendered next to the offending field as a human message — checked by:
    `python -m unittest tests.test_ui_assets.CreateFlowTest -v`
-7. The page loads with **no console errors and no console warnings** — checked by:
-   `node ../tools/viewport-check.mjs http://127.0.0.1:8080/ evidence/` with exit code `0`
+7. The page loads with **no console errors** — checked by:
+   `node ../tools/viewport-check.mjs http://127.0.0.1:8080/ evidence/` with exit code `0` — **and no
+   console warnings**, which that tool cannot see (assumption A15) — checked by:
+   `node checks/console-check.mjs http://127.0.0.1:8080/ evidence/` with exit code `0`
 
 ### Invariants touched
 > "**I5 — No floats in the money path.**" — task, *Invariants*. Criterion 2 confines formatting to
@@ -602,9 +614,21 @@ visible focus, produces no console errors or warnings, and its evidence is commi
    type
 6. Form controls have associated labels, and the error and loading regions are announced (`role` /
    `aria-live`) — checked by: `python -m unittest tests.test_ui_quality.LabelsAndLiveRegionsTest -v`
-7. **No console warnings either**, not only errors — checked by:
-   `python -m unittest tests.test_ui_quality.NoConsoleWarningsTest -v`, which asserts the `warning`
-   count in `evidence/viewport-report.json` is zero
+7. A stage-local check, **`stage-1/checks/console-check.mjs`** (Builder-owned; it reuses the
+   `playwright-core` already installed in `tools/node_modules` and **does not modify `tools/`**),
+   subscribes to **every** console message type, loads the page at 375px and at desktop width, fails
+   on any message of type `error` **or** `warning`, and writes `stage-1/evidence/console-report.json`
+   with a per-type count per view — checked by:
+   `node checks/console-check.mjs http://127.0.0.1:8080/ evidence/` with exit code `0`
+8. **No console warnings** at either width, on the accounts view, the history view and a visible
+   error state — checked by: `python -m unittest tests.test_ui_quality.NoConsoleWarningsTest -v`,
+   which asserts the `warning` count in `evidence/console-report.json` is zero for every view
+   > `tools/viewport-check.mjs` cannot prove criteria 7–8 and must not be relied on for them. It
+   > subscribes only to `m.type() === "error"` (`tools/viewport-check.mjs:55`), and its pass gate
+   > considers `consoleErrors`, `pageErrors` and `overflowPx` only — so `viewport-report.json` has no
+   > warning field at all. **A green viewport check is not evidence of "no warnings".** `tools/` is
+   > left untouched: `factory/protocols/git.md`'s ownership table assigns it to no seat, and the task
+   > forbids weakening the named checks. The stage-local check *adds* the missing coverage.
 
 ### Invariants touched
 None directly.
@@ -703,6 +727,14 @@ check on the assembled stage.
 6. At least one check in the suite was written by the Verifier from the task text and is not a copy of
    a Builder test, as required by the definition of done — checked by: the Verifier's sign-off naming
    the file and the task sentence it came from
+7. The two criteria the task's **named** tools cannot prove are re-proved **independently**, with the
+   Verifier's own checks rather than the Builder's: (a) no console message of type `warning` at either
+   width, and (b) `/healthz` answered within 5 seconds of `docker run` returning. The checks must
+   fail if the Builder's `checks/console-check.mjs` or its startup timing is deleted or stubbed, so a
+   missing proof cannot pass silently — checked by:
+   `python -m unittest tests.test_acceptance_tool_gaps -v`
+   > Criterion 3's `git diff --exit-code -- tools/` also guards this: the gaps are closed by adding
+   > stage-local coverage, never by editing or weakening the named checks (assumptions A15, A16).
 
 ### Invariants touched
 All, indirectly: the suite is the contract-level net under the Breaker's attacks.
@@ -729,8 +761,9 @@ The stage is assembled from accepted work only, every required piece of evidence
 ### Acceptance criteria
 1. `stage-1/evidence/` contains all five required artifacts: `race.jsonl` with its conservation
    check, `replay.jsonl`, `container-check.log`, viewport screenshots at 375px and desktop, and the
-   full suite output — checked by: `python -m unittest tests.test_evidence_index -v`, which asserts
-   each path exists and is non-empty
+   full suite output — plus the two artifacts this plan adds to close the tool gaps,
+   `console-report.json` (A15) and `startup-time.txt` (A16) — checked by:
+   `python -m unittest tests.test_evidence_index -v`, which asserts each path exists and is non-empty
 2. The full suite is green on the **final** commit, and its unedited output is committed at
    `stage-1/evidence/full-suite.txt` — checked by:
    `python -m unittest discover -s tests -t . -v | tee evidence/full-suite.txt`
@@ -805,7 +838,7 @@ unmapped.
 | Task requirement | Item |
 |---|---|
 | One container, one process, no external services, SQLite file inside | S1-08 |
-| `/healthz` within 5 seconds of start | S1-08 |
+| `/healthz` within 5 seconds of start | S1-08 (timed run, A16) · re-proved S1-13 |
 | 512 MB memory ceiling | S1-08 |
 | 50 concurrent × 5 rounds, only `409 insufficient_funds` as error | S1-06, S1-12 |
 | 20 simultaneous replays, exactly one money movement | S1-05, S1-12 |
@@ -828,7 +861,8 @@ unmapped.
 | `409 insufficient_funds` as a clear human message | S1-10 |
 | Works at 375px and desktop | S1-11 |
 | Fully keyboard operable, visible focus states | S1-11 |
-| No console errors or warnings, verified with `tools/viewport-check.mjs` | S1-11 |
+| No console **errors**, verified with `tools/viewport-check.mjs` | S1-09, S1-11 |
+| No console **warnings** — outside that tool's reach, so `checks/console-check.mjs` (A15) | S1-09, S1-11 · re-proved S1-13 |
 | Screenshots at both widths under `stage-1/evidence/` | S1-11 |
 
 ### Definition of done and evidence
@@ -861,3 +895,29 @@ unmapped.
   and proceed. Never wait.
 - A work item may be rejected at most three times. On the third, the Planner splits, narrows or
   rescopes it before anything more is built.
+
+---
+
+## Amendments
+
+Criteria changes after dispatch, with the reason, per `factory/protocols/board.md`.
+
+### 2026-09-30 — close two gaps where the task's named tool cannot prove its own criterion
+
+Raised by @rohitmaruriats/integrator and verified against the tool source before changing anything.
+No stage scope was added or dropped; two criteria that could not have been checked by the command
+they named are now checkable, and one redundant proof was made independent.
+
+| Item | Was | Now | Why |
+|---|---|---|---|
+| S1-09 c7 | "no console errors **and no console warnings** — `tools/viewport-check.mjs` exit 0" | errors by `viewport-check.mjs`; warnings by `checks/console-check.mjs` | `tools/viewport-check.mjs:55` subscribes only to `m.type() === "error"`; its pass gate never considers warnings, so the criterion's own command could not fail on a warning |
+| S1-11 c7 | "asserts the `warning` count in `evidence/viewport-report.json` is zero" | Builder-owned `checks/console-check.mjs` captures every console type and writes `evidence/console-report.json`; c8 asserts the warning count there | `viewport-report.json` has **no warning field**, so the old criterion named a field that does not exist — it was untestable as written |
+| S1-08 c5 | "within 5 seconds, measured in the test" | explicit method: timing-only run with a published port, worst of three runs under `5.000s`, elapsed times to `evidence/startup-time.txt` | `clean-container-check.sh` polls in a `sleep 2` loop to a 60s default and prints no elapsed time; and `--timeout 5` would put the busybox probe's own startup inside the deadline and false-fail a compliant service |
+| S1-13 | — | new c7: the Verifier re-proves both independently, and the check must fail if the Builder's proof is deleted or stubbed | the definition of done requires a reviewer check not copied from the Builder; a gap closed only by the Builder's own check has no independent floor |
+
+`tools/` is **not** modified by any of this. `factory/protocols/git.md`'s ownership table assigns
+`tools/` to no seat, and the task forbids weakening the named checks — so both gaps are closed by
+*adding* stage-local coverage. S1-08 c7 and S1-13 c3 already assert `git diff --exit-code -- tools/`
+is clean, which guards exactly that.
+
+Neither change blocks S1-01 or S1-02, which were already `ready` and are untouched.
