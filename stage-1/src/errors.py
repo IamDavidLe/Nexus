@@ -23,6 +23,11 @@ class InvalidRequest(ApiError):
     error = "invalid_request"
 
 
+class RequestTimeout(ApiError):
+    status = 408
+    error = "request_timeout"
+
+
 class NotFound(ApiError):
     status = 404
     error = "not_found"
