@@ -17,6 +17,8 @@ h1 { margin: 12px 0 10px; font: 400 clamp(42px, 8vw, 64px)/.95 "Instrument Serif
 .auth-submit:hover { background: #dbeafe; }
 .auth-secondary { border: 1px solid rgba(191,219,254,.24); border-radius: 12px; padding: 13px; color: #dbeafe; background: transparent; font: 600 14px Inter, sans-serif; cursor: pointer; }
 .auth-secondary:hover { border-color: #93c5fd; background: rgba(147,197,253,.08); }
+a.auth-secondary { display: block; text-align: center; text-decoration: none; }
+a.auth-secondary[aria-disabled="true"] { opacity: .5; pointer-events: none; }
 .auth-note { color: #8493ad; font-size: 12px; line-height: 1.6; margin: 20px 0 0; }
 .auth-submit:disabled { cursor: wait; opacity: .6; }
 .auth-links { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }
