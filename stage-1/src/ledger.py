@@ -46,35 +46,69 @@ class Ledger:
                   sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                   id TEXT UNIQUE NOT NULL,
                   name TEXT NOT NULL,
-                  opening_balance BLOB NOT NULL CHECK(typeof(opening_balance) = 'integer' AND opening_balance >= 0),
-                  balance BLOB NOT NULL CHECK(typeof(balance) = 'integer' AND balance >= 0)
-                );
+                  opening_balance INTEGER NOT NULL CHECK(typeof(opening_balance) = 'integer' AND opening_balance >= 0),
+                  balance INTEGER NOT NULL CHECK(typeof(balance) = 'integer' AND balance >= 0)
+                ) STRICT;
                 CREATE TABLE IF NOT EXISTS transfers (
                   sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                   id TEXT UNIQUE NOT NULL,
                   source_id TEXT NOT NULL REFERENCES accounts(id),
                   destination_id TEXT NOT NULL REFERENCES accounts(id),
-                  amount BLOB NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
+                  amount INTEGER NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
                   status TEXT NOT NULL CHECK(status = 'completed'),
                   created_at TEXT NOT NULL,
                   CHECK(source_id <> destination_id)
-                );
+                ) STRICT;
                 CREATE TABLE IF NOT EXISTS ledger_entries (
                   transfer_id TEXT NOT NULL REFERENCES transfers(id),
                   account_id TEXT NOT NULL REFERENCES accounts(id),
-                  amount BLOB NOT NULL,
+                  amount INTEGER NOT NULL,
                   CHECK(typeof(amount) = 'integer' AND amount <> 0)
-                );
+                ) STRICT;
                 CREATE TABLE IF NOT EXISTS idempotency_keys (
                   key TEXT PRIMARY KEY CHECK(length(key) BETWEEN 1 AND 128),
                   source_id TEXT NOT NULL,
                   destination_id TEXT NOT NULL,
-                  amount BLOB NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
+                  amount INTEGER NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
                   transfer_id TEXT NOT NULL REFERENCES transfers(id)
-                );
+                ) STRICT;
             """)
         finally:
             con.close()
+
+    def check_conservation(self, con=None):
+        """Return account and entry totals, including opening balances.
+
+        The optional connection is useful for raw-SQL attack tests; callers own
+        its lifecycle when supplying one.
+        """
+        owned = con is None
+        con = con or self._connect()
+        try:
+            rows = con.execute(
+                "SELECT id, opening_balance, balance FROM accounts ORDER BY sequence"
+            ).fetchall()
+            entries = {
+                row["account_id"]: row["amount"]
+                for row in con.execute(
+                    "SELECT account_id, COALESCE(SUM(amount), 0) AS amount "
+                    "FROM ledger_entries GROUP BY account_id"
+                )
+            }
+            expected = {
+                row["id"]: row["opening_balance"] + entries.get(row["id"], 0)
+                for row in rows
+            }
+            actual = {row["id"]: row["balance"] for row in rows}
+            return {
+                "balance_total": sum(actual.values()),
+                "ledger_total": sum(expected.values()),
+                "per_account": expected == actual,
+                "total": sum(actual.values()) == sum(expected.values()),
+            }
+        finally:
+            if owned:
+                con.close()
 
     @_database_available
     def create_account(self, name, opening_balance):
