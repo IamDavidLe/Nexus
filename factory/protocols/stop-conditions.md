@@ -5,10 +5,10 @@ points; they are recalibrated after each dry run and frozen before the official 
 
 | Box | Starting value | Recalibrated from |
 |-----|---------------|-------------------|
-| Wall time per stage | 3 hours **[VERIFY after dry run 1]** | Dry-run wall times, plus 50% |
-| Token budget per stage (all seats) | Set after dry run 1 **[VERIFY]** | Dry-run usage per stage, plus 50% |
-| Silence on an assigned work item | 20 minutes | Dry-run observations |
-| Rejections per work item | 3 (`autonomy.md`) | Fixed |
+| Wall time per stage | 1.5 hours | Hard cap for cost control |
+| Token budget per stage (all seats) | 5M input / 500k output tokens (~$20/stage) | Hard cap to stay within $100 limit |
+| Silence on an assigned work item | 10 minutes | Fixed |
+| Rejections per work item | 2 (`autonomy.md`) | Fixed |
 
 ## Who watches
 

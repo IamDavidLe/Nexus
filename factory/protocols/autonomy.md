@@ -19,7 +19,7 @@ each other's assumptions silently; they reply in the room.
 
 ## Reject-cycle cap
 
-A work item may be rejected at most three times. On the third rejection the Planner must act before
+A work item may be rejected at most two times. On the second rejection the Planner must act before
 any more building: split it into smaller items, narrow its criteria (recording what was deferred and
 why), or rescope the stage. Reviewers do not lower their bar to break a loop.
 

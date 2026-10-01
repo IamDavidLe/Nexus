@@ -91,8 +91,9 @@ dark-factory/
 - [ ] **2 🧑** Create free BAND account, download BAND Desktop, join the BAND Discord.
 - [ ] **3 🧑** Check email for the Featherless promo code + setup guide. Redeem it. Set a calendar reminder to cancel before the next billing cycle.
 - [ ] **4 🧑** In BAND Desktop: sign in, install the CLI and the coding-agent plugin, **run the readiness checks** (docs.band.ai/jam). Screenshot the green result → `media/readiness.png`.
-- [ ] **5 🧑** Decide the seat runtime(s). Default: Claude Code for seats (strongest coder), optionally one Featherless-backed seat (e.g. Qwen/DeepSeek coder) for the Breaker to show model diversity and lower cost. [VERIFY which adapters BAND supports in SDK setup docs.]
-- [x] **6 🤖** `git init` the repo with the layout above, MIT `LICENSE`, `.gitignore` (node_modules, .env, *.key, room caches).
+- [ ] **5 🧑** Decide the seat runtime(s) to strictly stay under the $100 budget:
+  - **Planner & Builder**: Claude 3.5 Sonnet (heavy lifting)
+  - **Verifier, Breaker, Integrator**: Claude 3 Haiku or a Featherless-backed seat (e.g. Qwen/DeepSeek) for lower cost and model diversity.
 - [ ] **7 🧑** Create the **public** GitHub repo `dark-factory` and push.
 - [x] **8 🤖** Add `.env.example` listing required keys (names only). Add a pre-commit hook that blocks commits containing `sk-`, `ANTHROPIC_API_KEY=`, `FEATHERLESS` key patterns.
 - [x] **9 🤖** Verify Docker works locally: `docker run --rm --network none alpine echo ok`. Record Docker version in `tools/env.md`.
