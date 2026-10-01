@@ -150,6 +150,7 @@ em { font-style: italic; }
 
 .rail__toggle { display: none; }
 .rail__scrim { display: none; }
+.rail__close { display: none; }
 
 /* ---------- Avatars ---------- */
 .avatar {
@@ -539,16 +540,18 @@ em { font-style: italic; }
   .sidebar.is-open .rail__scroll { display: grid; }
   .rail__scrim { position: fixed; inset: 71px 0 0; z-index: 35; display: block; visibility: hidden; pointer-events: none; border: 0; background: rgba(0, 0, 0, .58); backdrop-filter: blur(3px); opacity: 0; transition: opacity .3s, visibility 0s .3s; }
   .rail__scrim.is-visible { visibility: visible; pointer-events: auto; opacity: 1; transition: opacity .3s; }
+  .rail__close { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--text); background: rgba(11, 19, 34, .9); font: inherit; font-size: 14px; cursor: pointer; }
+  .rail__close span:last-child { color: var(--blue-2); font-size: 22px; line-height: 1; }
   .rail__promo { display: none; }
   .sidebar__bottom { display: flex; align-items: center; gap: 8px; margin: 0 0 0 auto; }
   .sidebar__bottom .nav-item { display: none; }
   .profile { padding: 6px; border-top: 0; }
   .profile > span:nth-child(2), .profile > span:last-child { display: none; }
   .rail__toggle { display: grid; order: -1; }
-  .rail__toggle[aria-expanded="true"] svg { opacity: 0; }
-  .rail__toggle[aria-expanded="true"]::before, .rail__toggle[aria-expanded="true"]::after { content: ""; position: absolute; width: 17px; height: 1.5px; border-radius: 2px; background: var(--blue-2); }
-  .rail__toggle[aria-expanded="true"]::before { transform: rotate(45deg); }
-  .rail__toggle[aria-expanded="true"]::after { transform: rotate(-45deg); }
+  .rail__toggle[aria-expanded="true"] svg, .sidebar.is-open .rail__toggle svg { opacity: 0; }
+  .rail__toggle[aria-expanded="true"]::before, .rail__toggle[aria-expanded="true"]::after, .sidebar.is-open .rail__toggle::before, .sidebar.is-open .rail__toggle::after { content: ""; position: absolute; width: 17px; height: 1.5px; border-radius: 2px; background: var(--blue-2); }
+  .rail__toggle[aria-expanded="true"]::before, .sidebar.is-open .rail__toggle::before { transform: rotate(45deg); }
+  .rail__toggle[aria-expanded="true"]::after, .sidebar.is-open .rail__toggle::after { transform: rotate(-45deg); }
   .dashboard { margin-left: 0; }
   .hero-row { grid-template-columns: 1fr; }
   .topbar { top: 71px; }
