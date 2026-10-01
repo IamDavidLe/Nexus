@@ -46,15 +46,15 @@ class Ledger:
                   sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                   id TEXT UNIQUE NOT NULL,
                   name TEXT NOT NULL,
-                  opening_balance INTEGER NOT NULL CHECK(typeof(opening_balance) = 'integer' AND opening_balance >= 0),
-                  balance INTEGER NOT NULL CHECK(typeof(balance) = 'integer' AND balance >= 0)
+                  opening_balance ANY NOT NULL CHECK(typeof(opening_balance) = 'integer' AND opening_balance >= 0),
+                  balance ANY NOT NULL CHECK(typeof(balance) = 'integer' AND balance >= 0)
                 ) STRICT;
                 CREATE TABLE IF NOT EXISTS transfers (
                   sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                   id TEXT UNIQUE NOT NULL,
                   source_id TEXT NOT NULL REFERENCES accounts(id),
                   destination_id TEXT NOT NULL REFERENCES accounts(id),
-                  amount INTEGER NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
+                  amount ANY NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
                   status TEXT NOT NULL CHECK(status = 'completed'),
                   created_at TEXT NOT NULL,
                   CHECK(source_id <> destination_id)
@@ -62,14 +62,14 @@ class Ledger:
                 CREATE TABLE IF NOT EXISTS ledger_entries (
                   transfer_id TEXT NOT NULL REFERENCES transfers(id),
                   account_id TEXT NOT NULL REFERENCES accounts(id),
-                  amount INTEGER NOT NULL,
+                  amount ANY NOT NULL,
                   CHECK(typeof(amount) = 'integer' AND amount <> 0)
                 ) STRICT;
                 CREATE TABLE IF NOT EXISTS idempotency_keys (
                   key TEXT PRIMARY KEY CHECK(length(key) BETWEEN 1 AND 128),
                   source_id TEXT NOT NULL,
                   destination_id TEXT NOT NULL,
-                  amount INTEGER NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
+                  amount ANY NOT NULL CHECK(typeof(amount) = 'integer' AND amount >= 1),
                   transfer_id TEXT NOT NULL REFERENCES transfers(id)
                 ) STRICT;
             """)
