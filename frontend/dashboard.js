@@ -647,8 +647,7 @@ $$('.glass-btn').forEach((btn) =>
 /* ---------- Keyboard ---------- */
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    if (actionModal?.classList.contains('is-open')) closeAction();
-    else if (txm?.classList.contains('is-open')) closeTx();
+    if (txm?.classList.contains('is-open')) closeTx();
     else if (drawer?.classList.contains('is-open')) setDrawer(false);
   }
   if (e.key === '/' && document.activeElement !== search) {
