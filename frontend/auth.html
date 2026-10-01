@@ -17,21 +17,12 @@
     <section class="auth-card" aria-labelledby="auth-title">
       <p class="auth-eyebrow">Your money, private by default.</p>
       <h1 id="auth-title">Welcome back.</h1>
-      <p class="auth-copy" data-auth-copy>Sign in to continue to your Nexus dashboard.</p>
+      <p class="auth-copy">Use secure Cognito email/password sign-in. Password reset is available from the hosted sign-in screen.</p>
       <div class="auth-status" role="status" aria-live="polite" data-auth-status hidden></div>
-      <form class="auth-form" data-auth-form novalidate>
-        <label for="email">Email address</label>
-        <input id="email" name="email" type="email" autocomplete="email" required />
-        <label for="password" data-password-label>Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
-        <label class="auth-confirm" for="confirm-password" hidden>Confirm password</label>
-        <input class="auth-confirm" id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" hidden />
-        <button class="auth-submit" type="submit" data-submit>Sign in</button>
-      </form>
-      <div class="auth-links"><button type="button" data-mode="signup">Create an account</button><button type="button" data-mode="reset">Forgot password?</button></div>
-      <button class="auth-back" type="button" data-mode="signin" hidden>← Back to sign in</button>
+      <div class="auth-form"><button class="auth-submit" type="button" data-login>Sign in with email</button><button class="auth-secondary" type="button" data-signup>Create an account</button></div>
+      <p class="auth-note">You’ll be redirected to Amazon Cognito’s managed login, where password reset is handled securely.</p>
     </section>
   </main>
-  <script type="module" src="./auth.js"></script>
+  <script type="module" src="./auth-cognito.js"></script>
 </body>
 </html>

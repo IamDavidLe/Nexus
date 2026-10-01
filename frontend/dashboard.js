@@ -1,18 +1,14 @@
-import { isSupabaseConfigured, supabase } from './supabase.js';
+import { getSession, isCognitoConfigured, signOut } from './cognito.js';
 
-if (!isSupabaseConfigured) {
+if (!isCognitoConfigured) {
   window.location.replace('./auth.html?reason=setup');
 } else {
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+  getSession().then((session) => {
     if (!session) window.location.replace('./auth.html?reason=session');
-  });
-  supabase.auth.getUser().then(({ data: { user } }) => {
-    if (!user) window.location.replace('./auth.html?reason=session');
   });
   document.querySelector('[data-signout]')?.addEventListener('click', async (event) => {
     event.preventDefault();
-    await supabase.auth.signOut();
-    window.location.replace('./auth.html');
+    signOut();
   });
 }
 
