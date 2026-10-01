@@ -29,10 +29,28 @@ form.addEventListener('submit', (event) => {
 });
 
 /* ---------- Mobile rail ---------- */
-const rail = document.querySelector('[data-rail]');
-const railToggle = document.querySelector('[data-rail-toggle]');
-railToggle?.addEventListener('click', () => {
-  const open = !rail.classList.contains('is-open');
-  rail.classList.toggle('is-open', open);
-  railToggle.setAttribute('aria-expanded', String(open));
-});
+{
+  const rail = document.querySelector('[data-rail]');
+  const railToggle = document.querySelector('[data-rail-toggle]');
+  const scrim = document.querySelector('.rail__scrim');
+  const closeControls = document.querySelectorAll('[data-rail-close]');
+  const setRail = (open) => {
+    if (!rail) return;
+    rail.classList.toggle('is-open', open);
+    railToggle?.setAttribute('aria-expanded', String(open));
+    railToggle?.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    scrim?.classList.toggle('is-visible', open);
+  };
+
+  railToggle?.addEventListener('click', (event) => {
+    event.preventDefault();
+    setRail(!rail?.classList.contains('is-open'));
+  });
+  closeControls.forEach((control) => control.addEventListener('click', () => setRail(false)));
+  document.querySelectorAll('.rail__scroll .nav-item').forEach((link) =>
+    link.addEventListener('click', () => setRail(false))
+  );
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && rail?.classList.contains('is-open')) setRail(false);
+  });
+}

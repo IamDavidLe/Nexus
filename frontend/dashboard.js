@@ -594,7 +594,8 @@ $$('[data-drawer-close]').forEach((b) => b.addEventListener('click', () => setDr
 {
   const rail = $('[data-rail]');
   const toggle = $('[data-rail-toggle]');
-  const scrim = $('[data-rail-close]');
+  const scrim = $('.rail__scrim');
+  const closeControls = $$('[data-rail-close]');
   const setRail = (open) => {
     if (!rail) return;
     rail.classList.toggle('is-open', open);
@@ -602,8 +603,11 @@ $$('[data-drawer-close]').forEach((b) => b.addEventListener('click', () => setDr
     toggle?.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
     scrim?.classList.toggle('is-visible', open);
   };
-  toggle?.addEventListener('click', () => setRail(!rail?.classList.contains('is-open')));
-  scrim?.addEventListener('click', () => setRail(false));
+  toggle?.addEventListener('click', (event) => {
+    event.preventDefault();
+    setRail(!rail?.classList.contains('is-open'));
+  });
+  closeControls.forEach((control) => control.addEventListener('click', () => setRail(false)));
   $$('.rail__scroll .nav-item').forEach((a) =>
     a.addEventListener('click', () => setRail(false))
   );
