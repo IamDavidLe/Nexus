@@ -1,0 +1,19 @@
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+
+    location = /healthz {
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location = / {
+        return 302 /Nexus/;
+    }
+
+    location /Nexus/ {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /Nexus/index.html;
+    }
+}
