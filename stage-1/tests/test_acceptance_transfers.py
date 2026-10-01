@@ -151,6 +151,16 @@ class PostTransfersRejections(AcceptanceCase):
                          "'Nothing is written' - a rejected transfer must not appear in history")
         self.assertNoNegativeBalances()
 
+    def test_destination_balance_overflow_is_rejected_without_writing(self):
+        # SQLite silently converts an overflowing INTEGER expression to REAL.
+        # That would break the minor-unit invariant, so the API must reject it
+        # before updating either account.
+        near_limit = self.http.new_account("Near integer limit", 2 ** 63 - 1)
+        before = self.http.balances()
+        r = self.http.transfer(self.src["id"], near_limit["id"], 1)
+        self.assertErrorBody(r, 422, "invalid_request")
+        self.assertEqual(before, self.http.balances())
+
     def test_missing_idempotency_key_is_400(self):
         # Task: 'Header: Idempotency-Key: <1-128 chars> - required' and
         # '400 missing_idempotency_key - header absent or empty'
@@ -166,6 +176,13 @@ class PostTransfersRejections(AcceptanceCase):
         self.http.transfer(self.src["id"], self.dst["id"], 10, key=None)
         self.assertEqual(before, self.http.balances(),
                          "a 400 missing_idempotency_key must not move money")
+
+    def test_history_rejects_missing_empty_or_malformed_account_id(self):
+        for account_id in (None, "", "not-a-uuid"):
+            with self.subTest(account_id=account_id):
+                suffix = "" if account_id is None else "=" + account_id
+                r = self.http.get("/transfers?account_id" + suffix)
+                self.assertErrorBody(r, 422, "invalid_request")
 
     def test_key_boundaries_1_and_128_chars_are_accepted(self):
         for key in ("k", "k" * 128):

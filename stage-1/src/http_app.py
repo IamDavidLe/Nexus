@@ -10,11 +10,12 @@ import json
 import re
 import socket
 import threading
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from .errors import ApiError, InvalidRequest, MethodNotAllowed, NotFound, RequestTimeout
-from .money import parse_json_object
+from .errors import ApiError, InvalidRequest, MethodNotAllowed, MissingIdempotencyKey, NotFound, RequestTimeout
+from .money import parse_json_object, require_integer
 
 JSON_CONTENT_TYPE = "application/json"
 #: A body larger than this is refused before it is read into memory.
@@ -97,10 +98,62 @@ def health(request):
     return 200, {"status": "ok"}
 
 
-def build_router():
+def build_router(ledger=None):
     """The product router. Tests add their own probe routes on top of it."""
     router = Router()
     router.add("GET", "/healthz", health)
+    if ledger is None:
+        return router
+
+    def account_create(request):
+        body = request.json()
+        if "name" not in body:
+            raise InvalidRequest("'name' is required")
+        return 201, ledger.create_account(body["name"], require_integer(body, "opening_balance"))
+
+    def accounts(_request):
+        return 200, {"accounts": ledger.accounts()}
+
+    def account_get(request):
+        return 200, ledger.account(request.params["id"])
+
+    def transfer_create(request):
+        key = request.headers.get("Idempotency-Key", "")
+        if not key:
+            raise MissingIdempotencyKey("Idempotency-Key is required")
+        if len(key) > 128:
+            raise InvalidRequest("Idempotency-Key must be 1-128 characters")
+        body = request.json()
+        source_id = body.get("source_id")
+        destination_id = body.get("destination_id")
+        if not isinstance(source_id, str) or not isinstance(destination_id, str):
+            raise InvalidRequest("source_id and destination_id are required strings")
+        if source_id == destination_id:
+            raise InvalidRequest("source_id and destination_id must differ")
+        amount = require_integer(body, "amount")
+        if amount < 1:
+            raise InvalidRequest("'amount' must be positive")
+        return 201, ledger.transfer(source_id, destination_id, amount, key)
+
+    def transfer_get(request):
+        return 200, ledger.get_transfer(request.params["id"])
+
+    def transfer_history(request):
+        values = request.query.get("account_id", [])
+        if len(values) != 1 or not values[0]:
+            raise InvalidRequest("account_id is required")
+        try:
+            uuid.UUID(values[0])
+        except (ValueError, AttributeError):
+            raise InvalidRequest("account_id must be a UUID") from None
+        return 200, {"transfers": ledger.history(values[0])}
+
+    router.add("POST", "/accounts", account_create)
+    router.add("GET", "/accounts", accounts)
+    router.add("GET", "/accounts/{id}", account_get)
+    router.add("POST", "/transfers", transfer_create)
+    router.add("GET", "/transfers/{id}", transfer_get)
+    router.add("GET", "/transfers", transfer_history)
     return router
 
 
@@ -275,6 +328,7 @@ def make_server(
     host="0.0.0.0",
     port=8080,
     router=None,
+    ledger=None,
     *,
     request_timeout=REQUEST_TIMEOUT_SECONDS,
     request_deadline=REQUEST_DEADLINE_SECONDS,
@@ -282,7 +336,7 @@ def make_server(
 ):
     return Server(
         (host, port),
-        router if router is not None else build_router(),
+        router if router is not None else build_router(ledger),
         request_timeout=request_timeout,
         request_deadline=request_deadline,
         max_concurrent_connections=max_concurrent_connections,

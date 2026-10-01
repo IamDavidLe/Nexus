@@ -28,6 +28,24 @@ class RequestTimeout(ApiError):
     error = "request_timeout"
 
 
+class Conflict(ApiError):
+    status = 409
+
+    def __init__(self, error, detail=None):
+        self.error = error
+        super().__init__(detail)
+
+
+class MissingIdempotencyKey(ApiError):
+    status = 400
+    error = "missing_idempotency_key"
+
+
+class ServiceUnavailable(ApiError):
+    status = 503
+    error = "temporarily_unavailable"
+
+
 class NotFound(ApiError):
     status = 404
     error = "not_found"

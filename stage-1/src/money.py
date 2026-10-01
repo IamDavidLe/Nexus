@@ -25,6 +25,16 @@ def _reject_constant(name):
     raise InvalidRequest("%s is not a valid JSON value here" % (name,))
 
 
+def _unique_object(pairs):
+    """Build an object while rejecting duplicate names at every nesting level."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise InvalidRequest("duplicate JSON field %r" % (key,))
+        result[key] = value
+    return result
+
+
 def parse_json_object(raw):
     """Decode a request body into a ``dict``, or raise :class:`InvalidRequest`."""
     if not raw:
@@ -35,7 +45,10 @@ def parse_json_object(raw):
         raise InvalidRequest("request body is not valid UTF-8") from None
     try:
         value = json.loads(
-            text, parse_float=_reject_float, parse_constant=_reject_constant
+            text,
+            parse_float=_reject_float,
+            parse_constant=_reject_constant,
+            object_pairs_hook=_unique_object,
         )
     except InvalidRequest:
         raise

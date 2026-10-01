@@ -135,6 +135,16 @@ class MalformedTest(unittest.TestCase):
             require_integer({}, "opening_balance")
         self.assertIn("opening_balance", str(caught.exception))
 
+    def test_duplicate_keys_are_rejected_at_every_nesting_level(self):
+        for body in (b'{"amount": 1, "amount": 2}',
+                     b'{"amount": 1, "meta": {"x": 1, "x": 2}}'):
+            with self.subTest(body=body):
+                with self.assertRaises(InvalidRequest):
+                    parse_json_object(body)
+                response = probe(body)
+                self.assertEqual(422, response.status)
+                self.assertEqual("invalid_request", response.json()["error"])
+
 
 class SourceScanTest(unittest.TestCase):
     """Criterion 8, run as a test: no float construction or division in `src/`.

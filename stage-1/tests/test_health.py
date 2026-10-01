@@ -4,6 +4,7 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 import urllib.error
@@ -41,7 +42,11 @@ class HealthTimingTest(unittest.TestCase):
 
     def test_answers_within_one_second_of_process_start(self):
         port = free_port()
-        env = dict(os.environ, PORT=str(port), HOST="127.0.0.1")
+        with tempfile.TemporaryDirectory(prefix="stage1-health-") as tmp:
+            env = dict(os.environ, PORT=str(port), HOST="127.0.0.1", DB_PATH=str(Path(tmp) / "app.db"))
+            self._assert_entrypoint_health(env, port)
+
+    def _assert_entrypoint_health(self, env, port):
         env.pop("PYTHONDONTWRITEBYTECODE", None)
         url = "http://127.0.0.1:%d/healthz" % (port,)
 
