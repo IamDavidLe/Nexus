@@ -594,17 +594,22 @@ $$('[data-drawer-close]').forEach((b) => b.addEventListener('click', () => setDr
 {
   const rail = $('[data-rail]');
   const toggle = $('[data-rail-toggle]');
-  toggle?.addEventListener('click', () => {
-    const open = !rail.classList.contains('is-open');
+  const scrim = $('[data-rail-close]');
+  const setRail = (open) => {
+    if (!rail) return;
     rail.classList.toggle('is-open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-  });
+    toggle?.setAttribute('aria-expanded', String(open));
+    toggle?.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    scrim?.classList.toggle('is-visible', open);
+  };
+  toggle?.addEventListener('click', () => setRail(!rail?.classList.contains('is-open')));
+  scrim?.addEventListener('click', () => setRail(false));
   $$('.rail__scroll .nav-item').forEach((a) =>
-    a.addEventListener('click', () => {
-      rail.classList.remove('is-open');
-      toggle?.setAttribute('aria-expanded', 'false');
-    })
+    a.addEventListener('click', () => setRail(false))
   );
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && rail?.classList.contains('is-open')) setRail(false);
+  });
 }
 
 /* ---------- Rail active state follows sections ---------- */

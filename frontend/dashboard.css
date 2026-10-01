@@ -149,6 +149,7 @@ em { font-style: italic; }
 .profile > span:last-child { color: var(--dim); }
 
 .rail__toggle { display: none; }
+.rail__scrim { display: none; }
 
 /* ---------- Avatars ---------- */
 .avatar {
@@ -536,12 +537,18 @@ em { font-style: italic; }
     background: rgba(3, 4, 8, .97); backdrop-filter: blur(22px);
   }
   .sidebar.is-open .rail__scroll { display: grid; }
+  .rail__scrim { position: fixed; inset: 71px 0 0; z-index: 35; display: block; visibility: hidden; pointer-events: none; border: 0; background: rgba(0, 0, 0, .58); backdrop-filter: blur(3px); opacity: 0; transition: opacity .3s, visibility 0s .3s; }
+  .rail__scrim.is-visible { visibility: visible; pointer-events: auto; opacity: 1; transition: opacity .3s; }
   .rail__promo { display: none; }
   .sidebar__bottom { display: flex; align-items: center; gap: 8px; margin: 0 0 0 auto; }
   .sidebar__bottom .nav-item { display: none; }
   .profile { padding: 6px; border-top: 0; }
   .profile > span:nth-child(2), .profile > span:last-child { display: none; }
   .rail__toggle { display: grid; order: -1; }
+  .rail__toggle[aria-expanded="true"] svg { opacity: 0; }
+  .rail__toggle[aria-expanded="true"]::before, .rail__toggle[aria-expanded="true"]::after { content: ""; position: absolute; width: 17px; height: 1.5px; border-radius: 2px; background: var(--blue-2); }
+  .rail__toggle[aria-expanded="true"]::before { transform: rotate(45deg); }
+  .rail__toggle[aria-expanded="true"]::after { transform: rotate(-45deg); }
   .dashboard { margin-left: 0; }
   .hero-row { grid-template-columns: 1fr; }
   .topbar { top: 71px; }
