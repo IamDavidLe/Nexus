@@ -6,8 +6,8 @@ if (!isSupabaseConfigured) {
   const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
     if (!session) window.location.replace('./auth.html?reason=session');
   });
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    if (!session) window.location.replace('./auth.html?reason=session');
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) window.location.replace('./auth.html?reason=session');
   });
   document.querySelector('[data-signout]')?.addEventListener('click', async (event) => {
     event.preventDefault();

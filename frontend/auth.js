@@ -40,9 +40,9 @@ if (!isSupabaseConfigured) {
     if (event === 'PASSWORD_RECOVERY') setMode('update');
     else if (session && mode !== 'reset' && !recovery) window.location.replace('./dashboard.html');
   });
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  supabase.auth.getUser().then(({ data: { user } }) => {
     if (recovery) setMode('update');
-    else if (session) window.location.replace('./dashboard.html');
+    else if (user) window.location.replace('./dashboard.html');
   });
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); showStatus();
