@@ -1,3 +1,21 @@
+import { isSupabaseConfigured, supabase } from './supabase.js';
+
+if (!isSupabaseConfigured) {
+  window.location.replace('./auth.html?reason=setup');
+} else {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!session) window.location.replace('./auth.html?reason=session');
+  });
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.replace('./auth.html?reason=session');
+  });
+  document.querySelector('[data-signout]')?.addEventListener('click', async (event) => {
+    event.preventDefault();
+    await supabase.auth.signOut();
+    window.location.replace('./auth.html');
+  });
+}
+
 /* =========================================================
    Nexus — dashboard behaviour
    Reveal, counters, live spending chart, activity filtering,

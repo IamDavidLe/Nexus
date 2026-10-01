@@ -7,6 +7,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        auth: fileURLToPath(new URL('./auth.html', import.meta.url)),
         dashboard: fileURLToPath(new URL('./dashboard.html', import.meta.url)),
         settings: fileURLToPath(new URL('./settings.html', import.meta.url)),
       },

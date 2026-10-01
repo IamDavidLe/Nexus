@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#050914" />
+  <title>Nexus — Sign in</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./auth.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <a class="auth-brand" href="./">Nexus<sup>®</sup></a>
+    <section class="auth-card" aria-labelledby="auth-title">
+      <p class="auth-eyebrow">Your money, private by default.</p>
+      <h1 id="auth-title">Welcome back.</h1>
+      <p class="auth-copy" data-auth-copy>Sign in to continue to your Nexus dashboard.</p>
+      <div class="auth-status" role="status" aria-live="polite" data-auth-status hidden></div>
+      <form class="auth-form" data-auth-form novalidate>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+        <label for="password" data-password-label>Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
+        <label class="auth-confirm" for="confirm-password" hidden>Confirm password</label>
+        <input class="auth-confirm" id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" hidden />
+        <button class="auth-submit" type="submit" data-submit>Sign in</button>
+      </form>
+      <div class="auth-links"><button type="button" data-mode="signup">Create an account</button><button type="button" data-mode="reset">Forgot password?</button></div>
+      <button class="auth-back" type="button" data-mode="signin" hidden>← Back to sign in</button>
+    </section>
+  </main>
+  <script type="module" src="./auth.js"></script>
+</body>
+</html>
