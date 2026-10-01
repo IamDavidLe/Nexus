@@ -26,16 +26,7 @@
 .onboard-grid { display: grid; gap: 14px; }
 @media (min-width: 560px) { .onboard-grid--two { grid-template-columns: 1fr 1fr; } }
 
-.field { display: grid; gap: 7px; min-inline-size: 0; }
-.field label { color: #dbeafe; font-size: 13px; margin: 0; }
-.field__optional { color: #64748b; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-left: 6px; }
-.field input, .field select { width: 100%; border: 1px solid rgba(191, 219, 254, .2); border-radius: 12px; padding: 13px 14px; color: #fff; background: rgba(255, 255, 255, .06); font: inherit; outline: 0; transition: border-color .18s ease, box-shadow .18s ease; }
-.field input:focus, .field select:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147, 197, 253, .16); }
-.field input::placeholder { color: #5b6880; }
-.field input[aria-invalid="true"] { border-color: #fb7185; box-shadow: 0 0 0 3px rgba(251, 113, 133, .14); }
-.field__hint { color: #8493ad; font-size: 12px; line-height: 1.55; margin: 0; }
-.field__error { color: #fecdd3; font-size: 12px; line-height: 1.5; margin: 0; }
-
+/* .field styles are shared with the sign-in page and live in auth.css. */
 .phone-row { display: grid; grid-template-columns: minmax(104px, 132px) 1fr; gap: 10px; }
 .phone-row select { color: #dbeafe; }
 .phone-row select option { color: #0b1430; background: #dbeafe; }

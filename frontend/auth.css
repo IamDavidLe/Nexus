@@ -17,8 +17,21 @@ h1 { margin: 12px 0 10px; font: 400 clamp(42px, 8vw, 64px)/.95 "Instrument Serif
 .auth-submit:hover { background: #dbeafe; }
 .auth-secondary { border: 1px solid rgba(191,219,254,.24); border-radius: 12px; padding: 13px; color: #dbeafe; background: transparent; font: 600 14px Inter, sans-serif; cursor: pointer; }
 .auth-secondary:hover { border-color: #93c5fd; background: rgba(147,197,253,.08); }
-a.auth-secondary { display: block; text-align: center; text-decoration: none; }
+a.auth-secondary { display: block; margin-top: 10px; text-align: center; text-decoration: none; }
 a.auth-secondary[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+
+/* Shared form field, used by both the sign-in page and the onboarding steps. */
+.field { display: grid; gap: 7px; min-inline-size: 0; }
+.field label { color: #dbeafe; font-size: 13px; margin: 0; }
+.field__optional { color: #64748b; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin-left: 6px; }
+.field input, .field select { width: 100%; border: 1px solid rgba(191,219,254,.2); border-radius: 12px; padding: 13px 14px; color: #fff; background: rgba(255,255,255,.06); font: inherit; outline: 0; transition: border-color .18s ease, box-shadow .18s ease; }
+.field input:focus, .field select:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(147,197,253,.16); }
+.field input::placeholder { color: #5b6880; }
+.field input[aria-invalid="true"] { border-color: #fb7185; box-shadow: 0 0 0 3px rgba(251,113,133,.14); }
+.field__hint { color: #8493ad; font-size: 12px; line-height: 1.55; margin: 0; }
+.field__error { color: #fecdd3; font-size: 12px; line-height: 1.5; margin: 0; }
+.field__error[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .field input, .field select { transition: none; } }
 .auth-note { color: #8493ad; font-size: 12px; line-height: 1.6; margin: 20px 0 0; }
 .auth-submit:disabled { cursor: wait; opacity: .6; }
 .auth-links { display: flex; justify-content: space-between; gap: 12px; margin-top: 20px; }

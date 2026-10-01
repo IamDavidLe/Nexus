@@ -89,4 +89,26 @@ export async function getSession() {
   try { const session = JSON.parse(sessionStorage.getItem(sessionKey) || 'null'); if (!session?.id_token) return null; await validateIdToken(session.id_token); return session; }
   catch { sessionStorage.removeItem(sessionKey); return null; }
 }
-export function signOut() { sessionStorage.removeItem(sessionKey); window.location.assign(`${endpoint('/logout')}?${new URLSearchParams({ client_id: required.clientId, logout_uri: required.logoutUri })}`); }
+export function readStoredSession() { try { return JSON.parse(sessionStorage.getItem(sessionKey) || 'null'); } catch { return null; } }
+
+/* Used by the on-page sign-in path, which gets tokens straight from InitiateAuth rather
+   than from a redirect. The ID token is verified here too, so no caller can store an
+   unvalidated session. */
+export async function persistSession(tokens) {
+  const claims = await validateIdToken(tokens.id_token);
+  const session = { ...tokens, claims };
+  sessionStorage.setItem(sessionKey, JSON.stringify(session));
+  return session;
+}
+
+/* Sign-in happens on our own pages, so there is no hosted-UI cookie to clear and logout
+   stays in the app. Callers should revoke the refresh token first (see revokeToken in
+   cognito-api.js); dropping the local session is what ends access here.
+   hostedLogoutUrl remains available if the hosted screens are ever reintroduced. */
+export function hostedLogoutUrl() {
+  return `${endpoint('/logout')}?${new URLSearchParams({ client_id: required.clientId, logout_uri: required.logoutUri })}`;
+}
+export function signOut({ redirectTo = './auth.html' } = {}) {
+  sessionStorage.removeItem(sessionKey);
+  window.location.replace(redirectTo);
+}

@@ -11,8 +11,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./dashboard.css" />
+  <style>
+    /* Fail-closed auth gate. This is render-blocking, so the dashboard is never painted
+       before the ID token verifies — previously the markup flashed while the async guard
+       in dashboard.js was still running. It stays hidden if the script never runs. */
+    html:not([data-auth-ready]) body { visibility: hidden; }
+    html:not([data-auth-ready]) .auth-gate { visibility: visible; }
+    html[data-auth-ready] .auth-gate { display: none; }
+    .auth-gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; gap: 14px; background: #000; color: #8493ad; font: 13px Inter, system-ui, sans-serif; }
+    .auth-gate__spinner { width: 26px; height: 26px; border: 2px solid rgba(191,219,254,.2); border-top-color: #93c5fd; border-radius: 50%; animation: auth-gate-spin .7s linear infinite; }
+    @keyframes auth-gate-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .auth-gate__spinner { animation-duration: 2.4s; } }
+  </style>
 </head>
 <body>
+  <div class="auth-gate" data-auth-gate role="status" aria-live="polite">
+    <div class="auth-gate__spinner" aria-hidden="true"></div>
+    <p>Checking your session…</p>
+    <noscript>This dashboard needs JavaScript to verify your session.</noscript>
+  </div>
   <a class="skip" href="#main">Skip to dashboard</a>
   <div class="grain" aria-hidden="true"></div>
 

@@ -1,13 +1,22 @@
-import { getSession, isCognitoConfigured, signOut } from './cognito.js';
+import { getSession, isCognitoConfigured, readStoredSession, signOut } from './cognito.js';
+import { revokeToken } from './cognito-api.js';
+
+/* The page is hidden by a render-blocking rule in dashboard.html until this attribute is
+   set, so it is only ever revealed after the ID token verifies. */
+const reveal = () => document.documentElement.setAttribute('data-auth-ready', '');
 
 if (!isCognitoConfigured) {
   window.location.replace('./auth.html?reason=setup');
 } else {
   getSession().then((session) => {
-    if (!session) window.location.replace('./auth.html?reason=session');
-  });
+    if (session) reveal();
+    else window.location.replace('./auth.html?reason=session');
+  }).catch(() => window.location.replace('./auth.html?reason=session'));
+
   document.querySelector('[data-signout]')?.addEventListener('click', async (event) => {
     event.preventDefault();
+    /* Revoke before dropping the session, so the refresh token cannot be replayed. */
+    await revokeToken(readStoredSession()?.refresh_token);
     signOut();
   });
 }

@@ -1,5 +1,5 @@
-import { isCognitoConfigured, startLogin } from './cognito.js';
-import { confirmSignUp, formatAddress, resendCode, signUp, toE164 } from './cognito-signup.js';
+import { isCognitoConfigured, persistSession } from './cognito.js';
+import { confirmSignUp, formatAddress, resendCode, signIn, signUp, toE164 } from './cognito-api.js';
 
 const form = document.querySelector('[data-form]');
 const status = document.querySelector('[data-auth-status]');
@@ -210,12 +210,22 @@ async function verify() {
   }
 }
 
-/* Hand the confirmed account to the existing authorization-code + PKCE flow;
-   the password is never kept past this point. */
+/* Sign the new account in on this page — no redirect to a hosted screen. The password is
+   read straight from the form and dropped with form.reset() as soon as tokens come back. */
 async function handoff(email, message) {
   show(message, 'success');
-  form.reset();
-  await startLogin({ loginHint: email });
+  const password = String(field('password').value);
+  try {
+    const tokens = await signIn({ email, password });
+    await persistSession(tokens);
+    form.reset();
+    window.location.replace('./dashboard.html');
+  } catch (error) {
+    form.reset();
+    /* The account exists and is confirmed; only the automatic sign-in failed. */
+    show(`Your account is ready, but automatic sign-in failed: ${error.message} Please sign in.`, 'error');
+    setTimeout(() => window.location.replace('./auth.html'), 2500);
+  }
 }
 
 form.addEventListener('submit', async (event) => {

@@ -24,12 +24,12 @@ redirects to setup.
 Implemented flows:
 
 - Nexus-hosted multi-step sign-up at `signup.html` (name, contact, address, password, email code);
-- Cognito-managed email/password sign-in;
-- Cognito-managed password reset;
+- on-page email/password sign-in via InitiateAuth (USER_PASSWORD_AUTH), no hosted-UI redirect;
+- a fail-closed dashboard gate that hides the page before paint until the ID token verifies;
 - authorization-code PKCE with state, nonce, and verifier checks;
 - issuer, audience, token-use, nonce, and expiry checks on the ID token;
 - RS256 signature verification against the user pool JWKS endpoint;
-- Cognito logout and a fail-closed dashboard guard.
+- sign-out that clears the session locally and revokes the refresh token.
 
 ## Sign-up (`signup.html`)
 
@@ -51,12 +51,30 @@ The flow collects and submits these Cognito standard attributes:
 After `ConfirmSignUp` succeeds, the page hands off to the normal PKCE sign-in with
 `login_hint` set to the new email. The password is never persisted anywhere in the frontend.
 
+### The app client must be PUBLIC (no client secret)
+
+This is the single hard requirement, and it is currently **not met** by app client
+`67ajqh4655tvb6a6g74sdang7g`. Cognito reports:
+
+```text
+Client 67ajqh4655tvb6a6g74sdang7g is configured with secret but SECRET_HASH was not received
+```
+
+Every user-pool call from a browser — `SignUp`, `InitiateAuth`, and the hosted-UI
+`/oauth2/token` exchange — must be authenticated with a `SECRET_HASH` (or HTTP Basic) derived
+from the client secret when the app client has one. That secret cannot ship in a frontend
+bundle, so **no browser-only flow can work against a client with a secret**, hosted UI included.
+
+Fix: create a second app client of type *Public client* with **no** client secret, give it the
+same callback/sign-out URLs and auth flows, and point `VITE_COGNITO_CLIENT_ID` at it. Keep the
+existing confidential client for any server-side use.
+
 ### Required app-client configuration
 
 The sign-up page cannot create or change AWS resources. The pool and app client must already
 allow all of the following, or Cognito rejects `SignUp` and the page shows its error verbatim:
 
-- **No client secret on the app client.** A secret would require a `SecretHash`, which cannot
+- **No client secret on the app client** (see above — this is currently blocking). A secret requires a `SecretHash`, which cannot
   be computed in a browser without shipping the secret.
 - **`given_name`, `family_name`, `phone_number`, and `address` writable by the app client.**
   Under *App client → Attribute read and write permissions*. An attribute that is required by

@@ -17,10 +17,23 @@
     <section class="auth-card" aria-labelledby="auth-title">
       <p class="auth-eyebrow">Your money, private by default.</p>
       <h1 id="auth-title">Welcome back.</h1>
-      <p class="auth-copy">Use secure Cognito email/password sign-in. Password reset is available from the hosted sign-in screen.</p>
+      <p class="auth-copy">Sign in with the email and password on your Nexus account.</p>
       <div class="auth-status" role="status" aria-live="polite" data-auth-status hidden></div>
-      <div class="auth-form"><button class="auth-submit" type="button" data-login>Sign in with email</button><a class="auth-secondary" href="./signup.html" data-signup-link>Create an account</a></div>
-      <p class="auth-note">You’ll be redirected to Amazon Cognito’s managed login, where password reset is handled securely.</p>
+      <form class="auth-form" data-login-form novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" required />
+          <p class="field__error" data-error-for="email" hidden></p>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <p class="field__error" data-error-for="password" hidden></p>
+        </div>
+        <button class="auth-submit" type="submit" data-login>Sign in</button>
+      </form>
+      <a class="auth-secondary" href="./signup.html" data-signup-link>Create an account</a>
+      <p class="auth-note">Your password goes straight to Amazon Cognito over TLS. Nexus never stores it.</p>
     </section>
   </main>
   <script type="module" src="./auth-cognito.js"></script>

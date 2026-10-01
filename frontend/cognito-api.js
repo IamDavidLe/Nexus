@@ -1,30 +1,52 @@
 import { cognitoClientId, idpOrigin, isCognitoConfigured } from './cognito.js';
 
-/* Amazon Cognito user-pool API calls that a public app client may make unauthenticated:
-   SignUp, ConfirmSignUp, ResendConfirmationCode. No client secret and no AWS
-   credentials are involved — adding either to this bundle would ship it to the browser.
-   A pool whose app client has a secret cannot be used from here: it would require a
-   SecretHash, which is exactly the thing that must not reach the browser. */
+/* Amazon Cognito user-pool API calls a public app client may make unauthenticated:
+   SignUp, ConfirmSignUp, ResendConfirmationCode, InitiateAuth, RevokeToken.
+   No client secret and no AWS credentials are involved — adding either would ship it
+   to the browser. A pool whose app client has a secret cannot be used from here: it
+   would require a SecretHash, which is exactly the thing that must not reach the browser. */
 const operations = {
   signUp: 'AWSCognitoIdentityProviderService.SignUp',
   confirmSignUp: 'AWSCognitoIdentityProviderService.ConfirmSignUp',
   resendCode: 'AWSCognitoIdentityProviderService.ResendConfirmationCode',
+  initiateAuth: 'AWSCognitoIdentityProviderService.InitiateAuth',
+  revokeToken: 'AWSCognitoIdentityProviderService.RevokeToken',
 };
 
-/* Cognito's own message is the only accurate explanation of a pool-policy rejection
-   (password policy, unwritable attribute, alias already taken), so surface it rather
-   than a guess. These codes get friendlier wording because users see them routinely. */
-const friendly = {
+/* Cognito's own message is the only accurate account of a pool-policy rejection, so it is
+   always what gets shown. These entries only ADD context for codes whose meaning depends on
+   the operation — they never replace the message, because a blanket mapping here once
+   reported "account already confirmed" for a pool that simply had sign-up switched off. */
+const hints = {
+  signUp: {
+    NotAuthorizedException: 'This usually means self-service sign-up is disabled on the user pool, or the app client has a client secret.',
+    InvalidParameterException: 'If this names an attribute, that attribute is probably not writable by this app client.',
+    InvalidLambdaResponseException: 'A pre-sign-up Lambda trigger on the pool rejected or failed on this request.',
+    UserLambdaValidationException: 'A pre-sign-up Lambda trigger on the pool rejected this request.',
+  },
+  confirmSignUp: {
+    NotAuthorizedException: 'This account may already be confirmed — try signing in instead.',
+  },
+  initiateAuth: {
+    NotAuthorizedException: 'Check the email and password. If they are right, the account may not be confirmed yet.',
+    InvalidParameterException: 'The app client may not have ALLOW_USER_PASSWORD_AUTH enabled.',
+  },
+};
+
+/* Only codes whose plain meaning is unambiguous regardless of operation. */
+const rewritten = {
   UsernameExistsException: 'An account with this email already exists. Try signing in instead.',
   CodeMismatchException: 'That verification code is not correct. Check the code and try again.',
   ExpiredCodeException: 'That verification code has expired. Send yourself a new one.',
   LimitExceededException: 'Too many attempts. Wait a few minutes before trying again.',
   TooManyRequestsException: 'Too many attempts. Wait a few minutes before trying again.',
-  NotAuthorizedException: 'This account is already confirmed. Try signing in instead.',
+  TooManyFailedAttemptsException: 'Too many failed attempts. Wait a few minutes before trying again.',
+  UserNotFoundException: 'No account exists for that email address.',
+  PasswordResetRequiredException: 'This account needs a password reset before you can sign in.',
 };
 
 export class CognitoError extends Error {
-  constructor(code, message) { super(message); this.name = 'CognitoError'; this.code = code; }
+  constructor(code, message, raw = '') { super(message); this.name = 'CognitoError'; this.code = code; this.raw = raw; }
 }
 
 async function call(operation, payload) {
@@ -43,7 +65,16 @@ async function call(operation, payload) {
   if (response.ok) return body;
   /* __type looks like "com.amazonaws.cognitoidp#UsernameExistsException". */
   const code = String(body.__type || '').split('#').pop() || `Http${response.status}`;
-  throw new CognitoError(code, friendly[code] || body.message || `Cognito rejected the request (${code}).`);
+  const raw = body.message || '';
+  /* Checked before anything else: a client secret makes every browser-direct call fail, and
+     the per-operation hints below would otherwise bury the one explanation that matters. */
+  if (/SECRET_HASH|configured with secret/i.test(raw)) {
+    throw new CognitoError('ClientSecretRequired', `This Cognito app client is configured with a client secret, so it cannot be used from a browser — every call would need a SECRET_HASH computed from that secret. Create a public app client with no secret and point VITE_COGNITO_CLIENT_ID at it. (Cognito said: ${raw})`, raw);
+  }
+  if (rewritten[code]) throw new CognitoError(code, rewritten[code], raw);
+  const hint = hints[operation]?.[code];
+  const base = raw || `Cognito rejected the request (${code}).`;
+  throw new CognitoError(code, hint ? `${base} ${hint}` : base, raw);
 }
 
 /* Cognito requires E.164. Accept what people actually type and normalise, rather than
@@ -77,7 +108,7 @@ export async function signUp({ email, password, firstName, lastName, phone, addr
   ];
   if (phone) attributes.push({ Name: 'phone_number', Value: phone });
   if (address) attributes.push({ Name: 'address', Value: address });
-  /* Email as username keeps sign-up and the hosted sign-in screen on the same identifier. */
+  /* Email as username keeps sign-up and sign-in on the same identifier. */
   const result = await call('signUp', { Username: email, Password: password, UserAttributes: attributes });
   return { confirmed: Boolean(result.UserConfirmed), deliveryTo: result.CodeDeliveryDetails?.Destination || '' };
 }
@@ -89,4 +120,37 @@ export async function confirmSignUp({ email, code }) {
 export async function resendCode({ email }) {
   const result = await call('resendCode', { Username: email });
   return { deliveryTo: result.CodeDeliveryDetails?.Destination || '' };
+}
+
+/* On-page sign-in. USER_PASSWORD_AUTH sends the password to Cognito over TLS instead of
+   redirecting to the hosted UI; it requires ALLOW_USER_PASSWORD_AUTH on the app client.
+   SRP would keep the password inside the browser entirely but needs a real SRP
+   implementation — see COGNITO_AUTH.md before swapping this out. */
+export async function signIn({ email, password }) {
+  const result = await call('initiateAuth', {
+    AuthFlow: 'USER_PASSWORD_AUTH',
+    AuthParameters: { USERNAME: email, PASSWORD: password },
+  });
+  /* MFA or a forced password change comes back as a challenge, not tokens. Nothing in this
+     frontend can complete those yet, so say so rather than failing as "no tokens". */
+  if (result.ChallengeName) {
+    throw new CognitoError(`Challenge:${result.ChallengeName}`, `This account requires an extra step (${result.ChallengeName}) that this app cannot complete yet.`);
+  }
+  const tokens = result.AuthenticationResult;
+  if (!tokens?.id_token && !tokens?.IdToken) throw new CognitoError('NoTokens', 'Cognito did not return a session.');
+  /* InitiateAuth returns PascalCase; normalise to the snake_case the token endpoint uses
+     so both sign-in paths store an identically shaped session. */
+  return {
+    id_token: tokens.IdToken,
+    access_token: tokens.AccessToken,
+    refresh_token: tokens.RefreshToken,
+    expires_in: tokens.ExpiresIn,
+    token_type: tokens.TokenType,
+  };
+}
+
+/* Best effort: a revoked refresh token cannot be replayed if local storage is scraped later. */
+export async function revokeToken(refreshToken) {
+  if (!refreshToken) return;
+  try { await call('revokeToken', { Token: refreshToken }); } catch { /* sign-out must never block on this */ }
 }
