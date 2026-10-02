@@ -55,6 +55,10 @@ function session(response, tokens) {
 }
 function current(request) { const id = validSigned(cookies(request).nexus_session); const value = sessions.get(id); if (!value || value.expires < Date.now()) { sessions.delete(id); return null; } return value; }
 async function apiAuth(request, response, route) {
+  /* Checked before hash(), which would otherwise throw ERR_INVALID_ARG_TYPE on an undefined
+     clientSecret and surface a Node internal message instead of the real cause. cognito()
+     guards this too, but hash() runs first. */
+  if (!ready) return json(response, 503, { error: 'Authentication is not configured.', code: 'AuthUnavailable' });
   const input = await body(request);
   const hash = (username) => createHmac('sha256', config.clientSecret).update(`${username}${config.clientId}`).digest('base64');
   if (route === 'signin') {

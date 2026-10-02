@@ -1,0 +1,36 @@
+# Render Blueprint for Nexus.
+#
+# This is a Docker web service, not a static site: server.js holds the Cognito client secret,
+# computes SECRET_HASH, proxies SignUp/ConfirmSignUp/ResendConfirmationCode/InitiateAuth, and
+# serves the built frontend from frontend/dist under /Nexus/.
+#
+# NOTE: a Blueprint does not retroactively reconfigure a service created by hand in the
+# dashboard. Either create the service from this file (New > Blueprint), or set the same values
+# in the dashboard. The secrets below are sync: false, so Render prompts for them rather than
+# storing them in the repo — never commit a real client secret.
+services:
+  - type: web
+    name: nexus
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # /healthz reports {"status":"ok","authConfigured":<bool>} — authConfigured is false until
+    # every COGNITO_* value and SESSION_SECRET below are present.
+    healthCheckPath: /healthz
+    envVars:
+      - key: COGNITO_DOMAIN
+        sync: false
+      - key: COGNITO_ISSUER
+        sync: false
+      - key: COGNITO_CLIENT_ID
+        sync: false
+      # The confidential app client's secret. Server-side only — it must never appear in any
+      # VITE_ variable, which would bundle it into the browser build.
+      - key: COGNITO_CLIENT_SECRET
+        sync: false
+      - key: COGNITO_REDIRECT_URI
+        sync: false
+      - key: COGNITO_LOGOUT_URI
+        sync: false
+      # Signs the session cookie. Render generates it; rotating it invalidates all sessions.
+      - key: SESSION_SECRET
+        generateValue: true
