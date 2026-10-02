@@ -31,7 +31,7 @@ function clearPkce() { sessionStorage.removeItem(verifierKey); sessionStorage.re
 
 export function startLogin({ signup = false, loginHint = '' } = {}) {
   const query = signup ? '?signup=1' : '';
-  return Boolean(window.open(`/auth/login${query}`, '_blank', 'noopener,noreferrer'));
+  return `/auth/login${query}`;
 }
 
 export async function finishLogin() {

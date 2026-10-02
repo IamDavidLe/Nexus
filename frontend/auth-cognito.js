@@ -1,10 +1,9 @@
-import { finishLogin, isCognitoConfigured, startLogin } from './cognito.js';
+import { finishLogin, isCognitoConfigured } from './cognito.js';
 
 const status = document.querySelector('[data-auth-status]');
 const form = document.querySelector('[data-login-form]');
 const button = document.querySelector('[data-login]');
 const signupLink = document.querySelector('[data-signup-link]');
-const signupButton = document.querySelector('[data-signup]');
 const setup = 'Configure the server COGNITO_* variables and SESSION_SECRET in Render.';
 const field = (name) => form.elements.namedItem(name);
 
@@ -61,10 +60,4 @@ if (!isCognitoConfigured) {
 if (isCognitoConfigured) {
   finishLogin().then((session) => { if (session) window.location.replace('./dashboard.html'); })
     .catch((error) => show(error.message, 'error'));
-  const openHostedUi = (signup = false) => {
-    const opened = startLogin({ signup });
-    show(opened ? 'AWS Cognito Hosted UI opened in a new tab.' : 'Your browser blocked the Hosted UI popup. Allow popups for Nexus and try again.', opened ? 'success' : 'error');
-  };
-  button?.addEventListener('click', () => openHostedUi());
-  signupButton?.addEventListener('click', () => openHostedUi(true));
 }
