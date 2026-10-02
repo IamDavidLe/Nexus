@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHmac, createPublicKey, randomBytes, timingSafeEqual, verify as verifySignature } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,10 +39,13 @@ async function cognito(target, payload) {
   if (!response.ok) { const error = new Error(result.message || `Cognito rejected the request (${response.status}).`); error.code = String(result.__type || '').split('#').pop(); throw error; }
   return result;
 }
-function claims(token) { const parts = String(token || '').split('.'); if (parts.length !== 3) throw new Error('Malformed ID token.'); return JSON.parse(Buffer.from(parts[1], 'base64url')); }
-async function validateIdToken(token) {
-  const payload = claims(token);
-  if (payload.iss !== config.issuer || payload.aud !== config.clientId || payload.token_use !== 'id' || !Number.isFinite(payload.exp) || payload.exp <= Math.floor(Date.now() / 1000)) throw new Error('Invalid Cognito ID token.');
+function claims(token) { const parts = String(token || '').split('.'); if (parts.length !== 3) throw new Error('Malformed ID token.'); return { header: JSON.parse(Buffer.from(parts[0], 'base64url')), payload: JSON.parse(Buffer.from(parts[1], 'base64url')), signature: Buffer.from(parts[2], 'base64url'), input: `${parts[0]}.${parts[1]}` }; }
+async function validateIdToken(token, expectedNonce = '') {
+  const { header, payload, signature, input } = claims(token);
+  if (header.alg !== 'RS256' || !header.kid || payload.iss !== config.issuer || payload.aud !== config.clientId || payload.token_use !== 'id' || !Number.isFinite(payload.exp) || payload.exp <= Math.floor(Date.now() / 1000) || (expectedNonce && payload.nonce !== expectedNonce)) throw new Error('Invalid Cognito ID token.');
+  const jwks = await fetch(`${config.issuer}/.well-known/jwks.json`).then((r) => r.ok ? r.json() : Promise.reject(new Error('Cognito JWKS request failed.')));
+  const jwk = jwks.keys?.find((key) => key.kid === header.kid);
+  if (!jwk || !verifySignature('RSA-SHA256', Buffer.from(input), createPublicKey({ key: jwk, format: 'jwk' }), signature)) throw new Error('Invalid Cognito ID token signature.');
   return payload;
 }
 function session(response, tokens) {
@@ -77,7 +80,7 @@ const server = createServer(async (request, response) => {
   try {
     if (url.pathname === '/healthz') return json(response, 200, { status: 'ok', authConfigured: ready });
     if (url.pathname === '/auth/login') { if (!ready) return json(response, 503, { error: 'Authentication is not configured.' }); const state = randomBytes(32).toString('base64url'); const nonce = randomBytes(32).toString('base64url'); response.setHeader('Set-Cookie', cookie('nexus_oauth_state', `${state}.${nonce}.${sign(`${state}.${nonce}`)}`, 600)); return response.writeHead(302, { Location: `${config.domain}/oauth2/authorize?${new URLSearchParams({ response_type: 'code', client_id: config.clientId, redirect_uri: config.redirectUri, scope: 'openid email', state, nonce })}` }).end(); }
-    if (url.pathname === '/auth/callback') { const stored = cookies(request).nexus_oauth_state?.split('.'); if (!stored || stored[0] !== url.searchParams.get('state') || stored[2] !== sign(`${stored[0]}.${stored[1]}`)) return json(response, 400, { error: 'Invalid login state.' }); const token = await fetch(`${config.domain}/oauth2/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: config.clientId, client_secret: config.clientSecret, code: url.searchParams.get('code'), redirect_uri: config.redirectUri }) }).then((r) => r.json()); session(response, { claims: await validateIdToken(token.id_token), expires_in: token.expires_in }); response.setHeader('Set-Cookie', [response.getHeader('Set-Cookie'), clearCookie('nexus_oauth_state')]); return response.writeHead(302, { Location: '/Nexus/dashboard.html' }).end(); }
+    if (url.pathname === '/auth/callback') { const stored = cookies(request).nexus_oauth_state?.split('.'); if (!stored || stored[0] !== url.searchParams.get('state') || stored[2] !== sign(`${stored[0]}.${stored[1]}`)) return json(response, 400, { error: 'Invalid login state.' }); const token = await fetch(`${config.domain}/oauth2/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: config.clientId, client_secret: config.clientSecret, code: url.searchParams.get('code'), redirect_uri: config.redirectUri }) }).then((r) => r.json()); session(response, { claims: await validateIdToken(token.id_token, stored[1]), expires_in: token.expires_in }); response.setHeader('Set-Cookie', [response.getHeader('Set-Cookie'), clearCookie('nexus_oauth_state')]); return response.writeHead(302, { Location: '/Nexus/dashboard.html' }).end(); }
     if (url.pathname === '/auth/logout') { const id = validSigned(cookies(request).nexus_session); sessions.delete(id); response.setHeader('Set-Cookie', clearCookie('nexus_session')); return response.writeHead(302, { Location: '/Nexus/auth.html' }).end(); }
     if (url.pathname === '/api/session') { const value = current(request); return json(response, 200, value ? { authenticated: true, user: value.claims } : { authenticated: false }); }
     if (url.pathname.startsWith('/api/auth/') && request.method === 'POST') return await apiAuth(request, response, url.pathname.slice('/api/auth/'.length));
