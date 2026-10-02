@@ -65,11 +65,13 @@ async function call(operation, payload) {
   if (response.ok) return body;
   /* __type looks like "com.amazonaws.cognitoidp#UsernameExistsException". */
   const code = body.code || String(body.__type || '').split('#').pop() || `Http${response.status}`;
-  const raw = body.message || '';
+  /* Cognito replies with `message`; our own proxy replies with `error`. Reading only `message`
+     threw away the proxy's explanation and showed the bare "(AuthUnavailable)" fallback. */
+  const raw = body.message || body.error || '';
   /* Checked before anything else: a client secret makes every browser-direct call fail, and
      the per-operation hints below would otherwise bury the one explanation that matters. */
   if (/SECRET_HASH|configured with secret/i.test(raw)) {
-    throw new CognitoError('ClientSecretRequired', `This Cognito app client is configured with a client secret, so it cannot be used from a browser — every call would need a SECRET_HASH computed from that secret. Create a public app client with no secret and point VITE_COGNITO_CLIENT_ID at it. (Cognito said: ${raw})`, raw);
+    throw new CognitoError('ClientSecretRequired', `The server could not prove the app client's secret to Cognito. Check COGNITO_CLIENT_SECRET on the server — it must be the secret for COGNITO_CLIENT_ID. (Cognito said: ${raw})`, raw);
   }
   if (rewritten[code]) throw new CognitoError(code, rewritten[code], raw);
   const hint = hints[operation]?.[code];

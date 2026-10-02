@@ -31,14 +31,18 @@ default (`node server.js`).
 
 Implemented flows:
 
-- Nexus-hosted multi-step sign-up at `signup.html` (name, contact, address, password, email code);
-- on-page email/password sign-in via a server-side InitiateAuth call with `SECRET_HASH`;
+- Cognito Hosted UI login and sign-up launched by `auth.html` through `/auth/login`;
+- authorization-code exchange through the confidential server-side client;
 - authorization-code exchange on the server with state and nonce checks;
 - issuer, audience, token-use, and expiry checks before creating an opaque HttpOnly session;
 - secure SameSite cookies and a public `/healthz` endpoint;
 - sign-out that clears the server session and cookie.
 
 ## Sign-up (`signup.html`)
+
+The supported auth surface is the Cognito Hosted UI launched from `auth.html`. The legacy
+`signup.html` route is retained only for compatibility and must not perform a browser-side
+token exchange; use `/auth/login?signup=1` for new sign-ups.
 
 `cognito-api.js` calls same-origin `/api/auth/*` routes; the Node proxy calls the user-pool API using
 app client id — `SignUp`, `ConfirmSignUp`, and `ResendConfirmationCode`, the three operations a

@@ -1,10 +1,10 @@
-import { finishLogin, isCognitoConfigured, persistSession } from './cognito.js';
-import { signIn } from './cognito-api.js';
+import { finishLogin, isCognitoConfigured, startLogin } from './cognito.js';
 
 const status = document.querySelector('[data-auth-status]');
 const form = document.querySelector('[data-login-form]');
 const button = document.querySelector('[data-login]');
 const signupLink = document.querySelector('[data-signup-link]');
+const signupButton = document.querySelector('[data-signup]');
 const setup = 'Configure the server COGNITO_* variables and SESSION_SECRET in Render.';
 const field = (name) => form.elements.namedItem(name);
 
@@ -19,11 +19,11 @@ function setError(name, message) {
 if (!isCognitoConfigured) {
   show(`Authentication is unavailable. ${setup}`, 'error');
   button.disabled = true;
-  [...form.elements].forEach((element) => { element.disabled = true; });
+  form.querySelectorAll('button').forEach((element) => { element.disabled = true; });
   /* An anchor cannot be disabled; remove the destination and mark it for styling. */
   signupLink?.removeAttribute('href');
   signupLink?.setAttribute('aria-disabled', 'true');
-} else {
+} else if (false) {
   /* Still handles a return from the hosted screens if one is ever reintroduced, and
      surfaces a session that is already valid. */
   finishLogin()
@@ -56,4 +56,11 @@ if (!isCognitoConfigured) {
   });
 
   form.addEventListener('input', (event) => { if (event.target.name) setError(event.target.name, ''); });
+}
+
+if (isCognitoConfigured) {
+  finishLogin().then((session) => { if (session) window.location.replace('./dashboard.html'); })
+    .catch((error) => show(error.message, 'error'));
+  button?.addEventListener('click', () => startLogin());
+  signupButton?.addEventListener('click', () => startLogin({ signup: true }));
 }

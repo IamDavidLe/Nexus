@@ -7,16 +7,26 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const publicRoot = join(root, 'frontend', 'dist');
 const port = Number(process.env.PORT || 8080);
+/* Trimmed on the way in: a secret pasted into a dashboard field often carries a trailing
+   newline or space, which reads as "set" but produces a wrong SECRET_HASH and fails later as
+   an unrelated-looking Cognito error. */
+const env = Object.fromEntries(
+  ['COGNITO_DOMAIN', 'COGNITO_ISSUER', 'COGNITO_CLIENT_ID', 'COGNITO_CLIENT_SECRET', 'COGNITO_REDIRECT_URI', 'COGNITO_LOGOUT_URI', 'SESSION_SECRET']
+    .map((key) => [key, (process.env[key] || '').trim()]),
+);
 const config = {
-  domain: process.env.COGNITO_DOMAIN?.replace(/\/$/, ''),
-  issuer: process.env.COGNITO_ISSUER?.replace(/\/$/, ''),
-  clientId: process.env.COGNITO_CLIENT_ID,
-  clientSecret: process.env.COGNITO_CLIENT_SECRET,
-  redirectUri: process.env.COGNITO_REDIRECT_URI,
-  logoutUri: process.env.COGNITO_LOGOUT_URI,
-  sessionSecret: process.env.SESSION_SECRET,
+  domain: env.COGNITO_DOMAIN.replace(/\/$/, ''),
+  issuer: env.COGNITO_ISSUER.replace(/\/$/, ''),
+  clientId: env.COGNITO_CLIENT_ID,
+  clientSecret: env.COGNITO_CLIENT_SECRET,
+  redirectUri: env.COGNITO_REDIRECT_URI,
+  logoutUri: env.COGNITO_LOGOUT_URI,
+  sessionSecret: env.SESSION_SECRET,
 };
-const ready = Object.values(config).every(Boolean);
+/* Names only, never values — so /healthz can say which variable is missing instead of leaving
+   seven candidates to guess between. */
+const missingConfig = Object.keys(env).filter((key) => !env[key]);
+const ready = missingConfig.length === 0;
 const sessions = new Map();
 const cookie = (name, value, maxAge = 3600) => `${name}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
 const clearCookie = (name) => `${name}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
@@ -82,7 +92,7 @@ async function staticFile(response, pathname) {
 const server = createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
   try {
-    if (url.pathname === '/healthz') return json(response, 200, { status: 'ok', authConfigured: ready });
+    if (url.pathname === '/healthz') return json(response, 200, { status: 'ok', authConfigured: ready, missing: missingConfig });
     if (url.pathname === '/auth/login') { if (!ready) return json(response, 503, { error: 'Authentication is not configured.' }); const state = randomBytes(32).toString('base64url'); const nonce = randomBytes(32).toString('base64url'); response.setHeader('Set-Cookie', cookie('nexus_oauth_state', `${state}.${nonce}.${sign(`${state}.${nonce}`)}`, 600)); return response.writeHead(302, { Location: `${config.domain}/oauth2/authorize?${new URLSearchParams({ response_type: 'code', client_id: config.clientId, redirect_uri: config.redirectUri, scope: 'openid email', state, nonce })}` }).end(); }
     if (url.pathname === '/auth/callback') { const stored = cookies(request).nexus_oauth_state?.split('.'); if (!stored || stored[0] !== url.searchParams.get('state') || stored[2] !== sign(`${stored[0]}.${stored[1]}`)) return json(response, 400, { error: 'Invalid login state.' }); const token = await fetch(`${config.domain}/oauth2/token`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'authorization_code', client_id: config.clientId, client_secret: config.clientSecret, code: url.searchParams.get('code'), redirect_uri: config.redirectUri }) }).then((r) => r.json()); session(response, { claims: await validateIdToken(token.id_token, stored[1]), expires_in: token.expires_in }); response.setHeader('Set-Cookie', [response.getHeader('Set-Cookie'), clearCookie('nexus_oauth_state')]); return response.writeHead(302, { Location: '/Nexus/dashboard.html' }).end(); }
     if (url.pathname === '/auth/logout') { const id = validSigned(cookies(request).nexus_session); sessions.delete(id); response.setHeader('Set-Cookie', clearCookie('nexus_session')); return response.writeHead(302, { Location: '/Nexus/auth.html' }).end(); }
