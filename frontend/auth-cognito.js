@@ -61,6 +61,10 @@ if (!isCognitoConfigured) {
 if (isCognitoConfigured) {
   finishLogin().then((session) => { if (session) window.location.replace('./dashboard.html'); })
     .catch((error) => show(error.message, 'error'));
-  button?.addEventListener('click', () => startLogin());
-  signupButton?.addEventListener('click', () => startLogin({ signup: true }));
+  const openHostedUi = (signup = false) => {
+    const opened = startLogin({ signup });
+    show(opened ? 'AWS Cognito Hosted UI opened in a new tab.' : 'Your browser blocked the Hosted UI popup. Allow popups for Nexus and try again.', opened ? 'success' : 'error');
+  };
+  button?.addEventListener('click', () => openHostedUi());
+  signupButton?.addEventListener('click', () => openHostedUi(true));
 }

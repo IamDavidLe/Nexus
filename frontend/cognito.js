@@ -29,9 +29,9 @@ export function idpOrigin() {
 }
 function clearPkce() { sessionStorage.removeItem(verifierKey); sessionStorage.removeItem(stateKey); sessionStorage.removeItem(nonceKey); }
 
-export async function startLogin({ signup = false, loginHint = '' } = {}) {
+export function startLogin({ signup = false, loginHint = '' } = {}) {
   const query = signup ? '?signup=1' : '';
-  window.location.assign(`/auth/login${query}`);
+  return Boolean(window.open(`/auth/login${query}`, '_blank', 'noopener,noreferrer'));
 }
 
 export async function finishLogin() {
