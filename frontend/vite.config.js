@@ -16,7 +16,6 @@ export default defineConfig({
         signup: fileURLToPath(new URL('./signup.html', import.meta.url)),
         dashboard: fileURLToPath(new URL('./dashboard.html', import.meta.url)),
         settings: fileURLToPath(new URL('./settings.html', import.meta.url)),
-        harvestlink: fileURLToPath(new URL('./harvestlink.html', import.meta.url)),
       },
     },
   },
